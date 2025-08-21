@@ -10,7 +10,19 @@ It is a perfect tools for developers working with **immutable OS** like NixOS, w
 
 ## Features
 
-- **Install Toolchains**: Easily install and manage toolchains for various programming languages like Go, Rust, Python, Node.js, and more.
+- **Install Toolchains**: Easily install and manage toolchains for various programming languages, this includes the language runtime, package manager, code linters, compilers, testing frameworks, and more. Supported toolchains include:
+  - **Bash**
+  - **C**
+  - **Containers** (Podman)
+  - **C++**
+  - **GitHub CLI**
+  - **GitLab CLI**
+  - **Golang**
+  - **Java**
+  - **Kubernetes**
+  - **Node.js**
+  - **Python**
+  - **Rust**
 - **Export Packages**: Export installed packages to your host system, making them available globally.
 - **Setup Environment**: Quickly set up your development environment with the necessary tools, dependencies and environment variables.
 - **Cross-Platform**: Works on Linux, macOS, and Windows (via WSL).
@@ -48,6 +60,33 @@ You can also run DevBox using the published Docker image. This is useful if you 
 
 Once you have DevBox installed and are inside a distrobox, you can start using it to manage your development tools and environments.
 
+```plaintext
+devbox is the package manager for the distrobox ecosystem.
+It helps you install packages on your distrobox and export them to your host system.
+
+Usage:
+  devbox [command]
+
+Available Commands:
+  completion  Generate the autocompletion script for the specified shell
+  help        Help about any command
+  install     Install a language toolchain or a package
+
+Flags:
+  -h, --help              help for devbox
+  -l, --log-file string   Path to the log file
+      --no-export         Do not export the package to the host system
+  -n, --skip-ide          Skip IDE installation
+  -v, --verbose           Enable verbose output
+      --version           version for devbox
+
+Additional help topcis:
+  devbox setup      Setup the devbox by installing the minimum required packages
+  devbox share      Share a package with the host system
+
+Use "devbox [command] --help" for more information about a command.
+```
+
 ### devbox setup
 
 The `devbox setup` command initializes your development environment by setting up necessary environment variables and installing essential tools. It is recommended to run this command after entering a new distrobox.
@@ -65,8 +104,36 @@ devbox setup
 
 The `devbox install` command allows you to install various toolchains and binaries. You can specify the toolchains you want to install, and DevBox will handle the installation process for you. It will also export the installed packages to your host system, making them available globally.
 
+```plaintext
+Install a language toolchain or a package.
+Supports installing language toolchains for Bash, Go, Rust, Python, Node, Kubernetes, Container, Java, GitLab, GitHub, C, C++
+
+Usage:
+  devbox install [toolchain...] [flags]
+
+Flags:
+      --file string   Path to a file containing a list of languages toolchains to install, one per line
+  -h, --help          help for install
+
+Global Flags:
+  -l, --log-file string   Path to the log file
+      --no-export         Do not export the package to the host system
+  -n, --skip-ide          Skip IDE installation
+  -v, --verbose           Enable verbose output
+```
+
 *This command is also idempotent, meaning you can run it multiple times without causing issues.*
 
 ```bash
+# Install multiple toolchains from args
 devbox install <toolchain1> <toolchain2> ...
+
+# Install a specific toolchain
+devbox install <toolchain>
+
+# Install toolchains from a file
+devbox install --file <path-to-file>
+
+# Install toolchains from a file & with args
+devbox install --file <path-to-file> <toolchain1> <toolchain2> ...
 ```
