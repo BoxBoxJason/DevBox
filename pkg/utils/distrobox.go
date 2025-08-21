@@ -43,16 +43,18 @@ func IsDistroboxBinaryExported(packageName string) (bool, error) {
 
 // ExportDistroboxBinaries exports a list of binaries from the distrobox to the host system.
 // It returns an error if the export fails.
-func ExportDistroboxBinaries(binaries []string) error {
+func ExportDistroboxBinaries(binaries []string) []error {
 	if !distroboxExportAvailable {
-		return errors.New(DISTROBOX_NOT_AVAILABLE_ERROR)
+		return []error{errors.New(DISTROBOX_NOT_AVAILABLE_ERROR)}
 	}
+	errorChan := make(chan error, len(binaries))
 	for _, binary := range binaries {
 		if err := ExportDistroboxBinary(binary); err != nil {
-			return fmt.Errorf("failed to export binary %s: %w", binary, err)
+			errorChan <- fmt.Errorf("failed to export binary %s: %w", binary, err)
 		}
 	}
-	return nil
+	close(errorChan)
+	return MergeErrors(errorChan)
 }
 
 // ExportDistroboxBinary exports a binary from the distrobox to the host system.

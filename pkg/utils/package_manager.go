@@ -26,20 +26,19 @@ type PackageManager struct {
 	SudoRequired     bool    `yaml:"sudo_required,omitempty"`
 }
 
-func (pm *PackageManager) Install(packages []string) error {
+func (pm *PackageManager) Install(packages []string) []error {
 	if pm == nil {
-		return fmt.Errorf("package manager is not specified or unsupported")
-	}
-
-	var cmd *exec.Cmd
-	if pm.SudoRequired {
-		cmd = exec.Command("sudo", pm.Name, pm.InstallCmd)
-	} else {
-		cmd = exec.Command(pm.Name, pm.InstallCmd)
+		return []error{fmt.Errorf("package manager is not specified or unsupported")}
 	}
 
 	// Multi-install logic
 	if pm.MultiInstall {
+		var cmd *exec.Cmd
+		if pm.SudoRequired {
+			cmd = exec.Command("sudo", pm.Name, pm.InstallCmd)
+		} else {
+			cmd = exec.Command(pm.Name, pm.InstallCmd)
+		}
 		zap.L().Info("Installing packages", zap.Strings("packages", packages), zap.String("package_manager", pm.Name))
 		cmd.Args = append(cmd.Args, packages...)
 
@@ -53,15 +52,22 @@ func (pm *PackageManager) Install(packages []string) error {
 		zap.L().Debug("Running command", zap.String("command", cmd.String()))
 		err := cmd.Run()
 		if err != nil {
-			return fmt.Errorf("failed to install packages using %s: %w, stderr: %s", pm.Name, err, stderr.String())
+			return []error{fmt.Errorf("failed to install packages using %s: %w, stderr: %s", pm.Name, err, stderr.String())}
 		}
 		zap.L().Info("Successfully installed packages", zap.Strings("packages", packages), zap.String("package_manager", pm.Name))
 		return nil
 	}
 
 	// Single-install logic
+	var errorChan = make(chan error, len(packages))
 	for _, pkg := range packages {
 		zap.L().Info("Installing package", zap.String("package", pkg), zap.String("package_manager", pm.Name))
+		var cmd *exec.Cmd
+		if pm.SudoRequired {
+			cmd = exec.Command("sudo", pm.Name, pm.InstallCmd)
+		} else {
+			cmd = exec.Command(pm.Name, pm.InstallCmd)
+		}
 		cmd.Args = append(cmd.Args, pkg)
 
 		if pm.NoInteractiveArg != nil {
@@ -73,10 +79,12 @@ func (pm *PackageManager) Install(packages []string) error {
 
 		zap.L().Debug("Running command", zap.String("command", cmd.String()))
 		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("failed to install package %s using %s: %w, stderr: %s", pkg, pm.Name, err, stderr.String())
+			errorChan <- fmt.Errorf("failed to install package %s using %s: %w, stderr: %s", pkg, pm.Name, err, stderr.String())
+		} else {
+			zap.L().Info("Successfully installed package", zap.String("package", pkg), zap.String("package_manager", pm.Name))
 		}
-		zap.L().Info("Successfully installed package", zap.String("package", pkg), zap.String("package_manager", pm.Name))
 	}
 
-	return nil
+	close(errorChan)
+	return MergeErrors(errorChan)
 }
