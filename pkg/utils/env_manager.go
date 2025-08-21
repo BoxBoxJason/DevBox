@@ -7,6 +7,8 @@ import (
 	"os"
 	"path"
 	"strings"
+
+	"go.uber.org/zap"
 )
 
 var (
@@ -15,9 +17,9 @@ var (
 
 func init() {
 	// Retrieve environment manager file
-	sysEnvFile := Getenv("DEVBOX_ENV_FILE", fmt.Sprintf("%s/00-env-devbox.zsh", Getenv("ZSH_CUSTOM", path.Join(os.Getenv("HOME"), ".oh-my-zsh/custom"))))
+	sysEnvFile := strings.TrimSpace(Getenv("DEVBOX_ENV_FILE", fmt.Sprintf("%s/00-env-devbox.zsh", Getenv("ZSH_CUSTOM", path.Join(os.Getenv("HOME"), ".oh-my-zsh/custom")))))
 	if sysEnvFile == "" {
-		panic("DEVBOX_ENV_FILE is not set and the default path does not exist")
+		zap.L().Fatal("DEVBOX_ENV_FILE is set to an empty string, please set it to a valid file path")
 	}
 
 	var envManager *EnvManager
@@ -25,18 +27,22 @@ func init() {
 	if envFileInfo, err := os.Stat(sysEnvFile); os.IsNotExist(err) {
 		// If the file does not exist, create it
 		if err := os.WriteFile(sysEnvFile, []byte{}, 0600); err != nil {
-			panic(fmt.Sprintf("Failed to create env file: %v", err))
+			zap.L().Fatal("Failed to create env file", zap.String("file", sysEnvFile), zap.Error(err))
 		}
 	} else if err != nil {
-		panic(fmt.Sprintf("Failed to check env file: %v", err))
+		zap.L().Fatal("Failed to stat env file", zap.String("file", sysEnvFile), zap.Error(err))
 	} else if envFileInfo.IsDir() {
-		panic(fmt.Sprintf("Expected a file but found a directory: %s", sysEnvFile))
+		zap.L().Fatal("DEVBOX_ENV_FILE points to a directory, expected a file", zap.String("file", sysEnvFile))
+	} else if envFileInfo.Mode()&os.ModeType != 0 {
+		zap.L().Fatal("DEVBOX_ENV_FILE points to a special file, expected a regular file", zap.String("file", sysEnvFile))
+	} else if envFileInfo.Mode()&0600 == 0 {
+		zap.L().Fatal("DEVBOX_ENV_FILE does not have the correct permissions, expected 0600", zap.String("file", sysEnvFile))
 	}
 	envManager = &EnvManager{
 		file: sysEnvFile,
 	}
 	if err := envManager.parseEnvFile(); err != nil {
-		panic(fmt.Sprintf("Failed to parse env file: %v", err))
+		zap.L().Fatal("Failed to parse env file", zap.String("file", sysEnvFile), zap.Error(err))
 	}
 
 	SystemEnvManager = envManager
@@ -55,17 +61,20 @@ func (em *EnvManager) Set(variables map[string]string) error {
 			unsetVariables[key] = value
 		}
 	}
-	if err := em.AppendToEnvFile(unsetVariables); err != nil {
-		return fmt.Errorf("failed to add environment variables to env file: %w", err)
+	if len(unsetVariables) > 0 {
+		if err := em.AppendToEnvFile(unsetVariables); err != nil {
+			return fmt.Errorf("failed to add environment variables to env file: %w", err)
+		}
+		// Update the in-memory map with the new variables
+		maps.Copy(em.variables, unsetVariables)
 	}
-	// Update the in-memory map with the new variables
-	maps.Copy(em.variables, unsetVariables)
 	return nil
 }
 
 // parseEnvFile reads the environment variables from the bash file.
 // It parses each line to check if it contains the format "export KEY=VALUE"
 func (em *EnvManager) parseEnvFile() error {
+	zap.L().Debug("Parsing environment file", zap.String("file", em.file))
 	vars := make(map[string]string)
 
 	// Open the file
@@ -94,6 +103,7 @@ func (em *EnvManager) parseEnvFile() error {
 		}
 	}
 	em.variables = vars
+	zap.L().Debug("Found existing devbox environment variables", zap.Int("count", len(vars)))
 	return scanner.Err()
 }
 
@@ -101,37 +111,54 @@ func (em *EnvManager) parseEnvFile() error {
 // It checks if the file ends with a newline and adds one if it doesn't.
 // The variables are added in the format "export KEY=VALUE".
 func (em *EnvManager) AppendToEnvFile(envVars map[string]string) error {
-	f, err := os.OpenFile(em.file, os.O_APPEND|os.O_WRONLY, 0600)
+	zap.L().Info("Appending environment variables to file", zap.String("file", em.file), zap.Any("variables", envVars))
+
+	// Open the file for reading to check if it ends with a newline
+	rf, err := os.Open(em.file)
 	if err != nil {
-		return fmt.Errorf("failed to open env file for appending: %w", err)
+		return fmt.Errorf("failed to open env file for reading: %w", err)
 	}
-	defer f.Close()
+	defer rf.Close()
 
 	// Check if the file does not end with a newline
-	stat, err := f.Stat()
+	stat, err := rf.Stat()
 	if err != nil {
 		return fmt.Errorf("failed to stat env file: %w", err)
 	}
 	if stat.Size() > 0 {
 		buf := make([]byte, 1)
-		_, err := f.ReadAt(buf, stat.Size()-1)
+		_, err := rf.ReadAt(buf, stat.Size()-1)
 		if err != nil {
 			return fmt.Errorf("failed to read last byte of env file: %w", err)
 		}
 		if buf[0] != '\n' {
-			// Write a newline if the last character is not '\n'
-			if _, err := f.WriteString("\n"); err != nil {
+			// Open the file for appending and add a newline
+			wf, err := os.OpenFile(em.file, os.O_APPEND|os.O_WRONLY, 0600)
+			if err != nil {
+				return fmt.Errorf("failed to open env file for appending: %w", err)
+			}
+			defer wf.Close()
+
+			if _, err := wf.WriteString("\n"); err != nil {
 				return fmt.Errorf("failed to write newline to env file: %w", err)
 			}
 		}
 	}
 
+	// Open the file for appending
+	wf, err := os.OpenFile(em.file, os.O_APPEND|os.O_WRONLY, 0600)
+	if err != nil {
+		return fmt.Errorf("failed to open env file for appending: %w", err)
+	}
+	defer wf.Close()
+
 	// Write each environment variable in the format "export KEY=VALUE"
 	for key, value := range envVars {
 		line := fmt.Sprintf("export %s=\"%s\"\n", key, value)
-		if _, err := f.WriteString(line); err != nil {
+		if _, err := wf.WriteString(line); err != nil {
 			return fmt.Errorf("failed to write new variable to env file: %w", err)
 		}
 	}
+
 	return nil
 }

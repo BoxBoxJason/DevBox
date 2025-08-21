@@ -2,7 +2,7 @@
 GO ?= go
 OUTPUT_DIR ?= ./bin
 PROJECT_NAME ?= devbox
-MAIN_FILE ?= cmd/main.go
+MAIN_FILE ?= cmd/*.go
 DOCKERFILE ?= Containerfile
 DOCKER_ENGINE ?= podman
 
