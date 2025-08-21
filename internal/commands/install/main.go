@@ -1,63 +1,72 @@
 package install
 
-import "fmt"
+import (
+	"devbox/internal/commands"
+	"devbox/pkg/utils"
+	"fmt"
 
-func InstallToolchains(toolchains ...string) error {
+	"go.uber.org/zap"
+)
+
+func InstallToolchains(args *commands.SharedCmdArgs, toolchains ...string) []error {
+	zap.L().Debug("Installing toolchains", zap.Strings("toolchains", toolchains))
+	errorsChannel := make(chan []error, len(toolchains))
 	for _, toolchain := range toolchains {
 		switch toolchain {
 		case "bash":
-			if err := installBash(); err != nil {
-				return fmt.Errorf("failed to install Bash toolchain: %w", err)
+			if err := installBash(args); err != nil {
+				errorsChannel <- err
 			}
 		case "c":
-			if err := installC(); err != nil {
-				return fmt.Errorf("failed to install C toolchain: %w", err)
+			if err := installC(args); err != nil {
+				errorsChannel <- err
 			}
 		case "container":
-			if err := installContainer(); err != nil {
-				return fmt.Errorf("failed to install Container toolchain: %w", err)
+			if err := installContainer(args); err != nil {
+				errorsChannel <- err
 			}
 		case "cpp":
-			if err := installCpp(); err != nil {
-				return fmt.Errorf("failed to install C++ toolchain: %w", err)
+			if err := installCpp(args); err != nil {
+				errorsChannel <- err
 			}
 		case "github":
-			if err := installGitHub(); err != nil {
-				return fmt.Errorf("failed to install GitHub toolchain: %w", err)
+			if err := installGitHub(args); err != nil {
+				errorsChannel <- err
 			}
 		case "gitlab":
-			if err := installGitLab(); err != nil {
-				return fmt.Errorf("failed to install GitLab toolchain: %w", err)
+			if err := installGitLab(args); err != nil {
+				errorsChannel <- err
 			}
 		case "golang":
-			if err := installGolang(); err != nil {
-				return fmt.Errorf("failed to install Go toolchain: %w", err)
+			if err := installGolang(args); err != nil {
+				errorsChannel <- err
 			}
 		case "java":
-			if err := installJava(); err != nil {
-				return fmt.Errorf("failed to install Java toolchain: %w", err)
+			if err := installJava(args); err != nil {
+				errorsChannel <- err
 			}
 		case "kubernetes":
-			if err := installKubernetes(); err != nil {
-				return fmt.Errorf("failed to install Kubernetes toolchain: %w", err)
+			if err := installKubernetes(args); err != nil {
+				errorsChannel <- err
 			}
 		case "node":
-			if err := installNode(); err != nil {
-				return fmt.Errorf("failed to install Node toolchain: %w", err)
+			if err := installNode(args); err != nil {
+				errorsChannel <- err
 			}
 		case "python":
-			if err := installPython(); err != nil {
-				return fmt.Errorf("failed to install Python toolchain: %w", err)
+			if err := installPython(args); err != nil {
+				errorsChannel <- err
 			}
 		case "rust":
-			if err := installRust(); err != nil {
-				return fmt.Errorf("failed to install Rust toolchain: %w", err)
+			if err := installRust(args); err != nil {
+				errorsChannel <- err
 			}
 
 		default:
-			return fmt.Errorf("unknown toolchain: %s", toolchain)
+			errorsChannel <- []error{fmt.Errorf("unknown toolchain: %s", toolchain)}
 		}
 	}
-	return nil
+	close(errorsChannel)
+	return utils.MergeErrors(errorsChannel)
 
 }

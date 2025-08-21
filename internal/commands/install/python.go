@@ -1,5 +1,7 @@
 package install
 
+import "devbox/internal/commands"
+
 var (
 	// PYTHON_BINARIES contains the binaries to be exported for Python
 	PYTHON_BINARIES = []string{
@@ -22,6 +24,6 @@ var (
 // installPython installs the entire Python development toolchain and environment.
 // It installs the Python binaries and packages, ensuring they are available in the user's PATH.
 // It also sets up the necessary environment variables for Python development.
-func installPython() error {
+func installPython(args *commands.SharedCmdArgs) []error {
 	return nil
 }

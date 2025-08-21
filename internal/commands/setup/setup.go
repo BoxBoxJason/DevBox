@@ -1,4 +1,4 @@
-package commands
+package setup
 
 var (
 	// DEFAULT_DEV_BINARIES contains the default development binaries to be exported
@@ -12,11 +12,18 @@ var (
 		"vim",
 		"jq",
 		"yq",
+		"bat",
 	}
 
 	// DEFAULT_DEV_APPS contains the default development applications to be exported
 	DEFAULT_DEV_APPS = []string{
 		"code",
+	}
+
+	// DEFAULT_VSCODE_EXTENSIONS contains the default VSCode extensions to be installed
+	DEFAULT_VSCODE_EXTENSIONS = []string{
+		"avidanson.vscode-markdownlint",
+		"bierner.markdown-mermaid",
 	}
 
 	// DEFAULT_ENVIRONMENT contains the default environment variables for development

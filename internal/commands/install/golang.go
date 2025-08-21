@@ -1,8 +1,10 @@
 package install
 
 import (
+	"devbox/internal/commands"
 	"devbox/pkg/utils"
 	"fmt"
+	"sync"
 )
 
 var (
@@ -35,40 +37,74 @@ var (
 		"GOSUMDB":     "${GOSUMDB:-sum.golang.org}",
 	}
 
-	GoPackageManager = &utils.PackageManager{
+	// GoPackageManager is the package manager for Go, used to install Go packages
+	GOLANG_PACKAGE_MANAGER = &utils.PackageManager{
 		Name:         "go",
 		InstallCmd:   "install",
 		MultiInstall: false,
+		SudoRequired: false,
+	}
+
+	// GOLANG_VSCODE_EXTENSIONS contains the VSCode extensions for Golang development
+	GOLANG_VSCODE_EXTENSIONS = []string{
+		"golang.go",
 	}
 )
 
 // installGolang installs the entire Golang development toolchain and environment.
 // It installs the Go binaries and packages, ensuring they are available in the user's PATH.
 // It also sets up the necessary environment variables for Go development.
-func installGolang() error {
+func installGolang(args *commands.SharedCmdArgs) []error {
 	// Set the Go development environment variables
 	err := utils.SystemEnvManager.Set(GOLANG_ENVIRONMENT)
 	if err != nil {
-		return fmt.Errorf("failed to set Go development environment variables: %w", err)
+		return []error{fmt.Errorf("failed to set Go development environment variables: %w", err)}
 	}
 
 	// Install the Go toolchain binaries
 	err = utils.SystemPackageManager.Install(GOLANG_EXPORTED_BINARIES)
 	if err != nil {
-		panic(fmt.Sprintf("Error during golang toolchain installation: %v", err))
+		return []error{fmt.Errorf("failed to install Go toolchain binaries: %w", err)}
+	}
+
+	// Use a WaitGroup to manage parallel installations
+	var wg sync.WaitGroup
+	errChan := make(chan error, 3) // Channel to collect errors from goroutines
+
+	// Install the VSCode extensions for Go development
+	if !args.SkipIde {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := utils.VSCODE_PACKAGE_MANAGER.Install(GOLANG_VSCODE_EXTENSIONS); err != nil {
+				errChan <- fmt.Errorf("failed to install Go VSCode extensions: %w", err)
+			}
+		}()
 	}
 
 	// Export the Go toolchain binaries to the user's environment
-	err = utils.ExportDistroboxBinaries(GOLANG_EXPORTED_BINARIES)
-	if err != nil {
-		panic(fmt.Sprintf("Error during golang binary export: %v", err))
+	if !args.NoExport {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := utils.ExportDistroboxBinaries(GOLANG_EXPORTED_BINARIES); err != nil {
+				errChan <- fmt.Errorf("failed to export Go toolchain binaries: %w", err)
+			}
+		}()
 	}
 
 	// Install the recommended development packages using go install
-	err = GoPackageManager.Install(GOLANG_PACKAGES)
-	if err != nil {
-		panic(fmt.Sprintf("Error during golang package installation: %v", err))
-	}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := GOLANG_PACKAGE_MANAGER.Install(GOLANG_PACKAGES); err != nil {
+			errChan <- fmt.Errorf("failed to install Go development packages: %w", err)
+		}
+	}()
 
-	return nil
+	// Wait for all goroutines to finish
+	wg.Wait()
+	close(errChan)
+
+	return utils.MergeErrors(errChan)
 }

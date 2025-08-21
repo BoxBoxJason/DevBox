@@ -1,5 +1,7 @@
 package install
 
+import "devbox/internal/commands"
+
 var (
 	// C_BINARIES contains the binaries to be exported for C
 	C_BINARIES = []string{
@@ -21,6 +23,6 @@ var (
 // installC installs the entire C development toolchain and environment.
 // It installs the C binaries and packages, ensuring they are available in the user's PATH.
 // It also sets up the necessary environment variables for C development.
-func installC() error {
+func installC(args *commands.SharedCmdArgs) []error {
 	return nil
 }

@@ -1,5 +1,7 @@
 package install
 
+import "devbox/internal/commands"
+
 var (
 	// JAVA_BINARIES contains the binaries to be exported for Java
 	JAVA_BINARIES = []string{
@@ -20,6 +22,6 @@ var (
 // installJava installs the entire Java development toolchain and environment.
 // It installs the Java binaries and packages, ensuring they are available in the user's PATH.
 // It also sets up the necessary environment variables for Java development.
-func installJava() error {
+func installJava(args *commands.SharedCmdArgs) []error {
 	return nil
 }

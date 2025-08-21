@@ -1,5 +1,7 @@
 package install
 
+import "devbox/internal/commands"
+
 var (
 	// KUBERNETES_BINARIES contains the binaries to be exported for Kubernetes
 	KUBERNETES_BINARIES = []string{
@@ -22,6 +24,6 @@ var (
 // installKubernetes installs the entire Kubernetes development toolchain and environment.
 // It installs the Kubernetes binaries and packages, ensuring they are available in the user's PATH.
 // It also sets up the necessary environment variables for Kubernetes development.
-func installKubernetes() error {
+func installKubernetes(args *commands.SharedCmdArgs) []error {
 	return nil
 }
