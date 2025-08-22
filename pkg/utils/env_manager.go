@@ -53,7 +53,7 @@ type EnvManager struct {
 	variables map[string]string
 }
 
-func (em *EnvManager) Set(variables map[string]string) error {
+func (em *EnvManager) Set(variables map[string]string) []error {
 	unsetVariables := make(map[string]string, len(variables))
 	for key, value := range variables {
 		variableValue, exists := em.variables[key]
@@ -63,10 +63,14 @@ func (em *EnvManager) Set(variables map[string]string) error {
 	}
 	if len(unsetVariables) > 0 {
 		if err := em.AppendToEnvFile(unsetVariables); err != nil {
-			return fmt.Errorf("failed to add environment variables to env file: %w", err)
+			return err
 		}
+
 		// Update the in-memory map with the new variables
 		maps.Copy(em.variables, unsetVariables)
+
+		// Load the new variables into the current environment
+		return em.ReloadEnvFile()
 	}
 	return nil
 }
@@ -110,55 +114,46 @@ func (em *EnvManager) parseEnvFile() error {
 // AppendToEnvFile appends new environment variables to the specified file.
 // It checks if the file ends with a newline and adds one if it doesn't.
 // The variables are added in the format "export KEY=VALUE".
-func (em *EnvManager) AppendToEnvFile(envVars map[string]string) error {
+func (em *EnvManager) AppendToEnvFile(envVars map[string]string) []error {
 	zap.L().Info("Appending environment variables to file", zap.String("file", em.file), zap.Any("variables", envVars))
 
-	// Open the file for reading to check if it ends with a newline
-	rf, err := os.Open(em.file)
+	fileEndsWithNewline, err := FileEndsWithNewline(em.file)
 	if err != nil {
-		return fmt.Errorf("failed to open env file for reading: %w", err)
-	}
-	defer rf.Close()
-
-	// Check if the file does not end with a newline
-	stat, err := rf.Stat()
-	if err != nil {
-		return fmt.Errorf("failed to stat env file: %w", err)
-	}
-	if stat.Size() > 0 {
-		buf := make([]byte, 1)
-		_, err := rf.ReadAt(buf, stat.Size()-1)
-		if err != nil {
-			return fmt.Errorf("failed to read last byte of env file: %w", err)
-		}
-		if buf[0] != '\n' {
-			// Open the file for appending and add a newline
-			wf, err := os.OpenFile(em.file, os.O_APPEND|os.O_WRONLY, 0600)
-			if err != nil {
-				return fmt.Errorf("failed to open env file for appending: %w", err)
-			}
-			defer wf.Close()
-
-			if _, err := wf.WriteString("\n"); err != nil {
-				return fmt.Errorf("failed to write newline to env file: %w", err)
-			}
-		}
+		return []error{fmt.Errorf("failed to check if env file ends with newline: %w", err)}
 	}
 
-	// Open the file for appending
+	// Open the file for appending and add a newline
 	wf, err := os.OpenFile(em.file, os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
-		return fmt.Errorf("failed to open env file for appending: %w", err)
+		return []error{fmt.Errorf("failed to open env file for appending: %w", err)}
 	}
 	defer wf.Close()
 
+	if !fileEndsWithNewline {
+		if _, err := wf.WriteString("\n"); err != nil {
+			return []error{fmt.Errorf("failed to write newline to env file: %w", err)}
+		}
+	}
+
+	errorChan := make(chan error, len(envVars))
 	// Write each environment variable in the format "export KEY=VALUE"
 	for key, value := range envVars {
 		line := fmt.Sprintf("export %s=\"%s\"\n", key, value)
 		if _, err := wf.WriteString(line); err != nil {
-			return fmt.Errorf("failed to write new variable to env file: %w", err)
+			errorChan <- fmt.Errorf("failed to write new variable to env file: %w", err)
 		}
 	}
+	close(errorChan)
+	return MergeErrors(errorChan)
+}
 
-	return nil
+// ReloadEnvFile loads / reloads the environment variables from the current cached variables.
+// If a variable's value contains a $ sign, it will be interpreted by the shell.
+func (em *EnvManager) ReloadEnvFile() []error {
+	errorChan := make(chan error, len(em.variables))
+	for key, value := range em.variables {
+		errorChan <- Setenv(key, value)
+	}
+	close(errorChan)
+	return MergeErrors(errorChan)
 }

@@ -29,3 +29,24 @@ func ReadFileLines(filePath string) ([]string, error) {
 
 	return lines, nil
 }
+
+func FileEndsWithNewline(filePath string) (bool, error) {
+	f, err := os.Open(filePath)
+	if err != nil {
+		return false, err
+	}
+	defer f.Close()
+	stat, err := f.Stat()
+	if err != nil {
+		return false, err
+	}
+	if stat.Size() == 0 {
+		return true, nil // Empty file, consider it ends with newline
+	}
+	buf := make([]byte, 1)
+	_, err = f.ReadAt(buf, stat.Size()-1)
+	if err != nil {
+		return false, err
+	}
+	return buf[0] == '\n', nil
+}
