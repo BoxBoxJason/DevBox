@@ -18,55 +18,31 @@ func InstallToolchains(args *commands.SharedCmdArgs, toolchains ...string) []err
 				errorsChannel <- err
 			}
 		case "c":
-			if err := installC(args); err != nil {
-				errorsChannel <- err
-			}
+			errorsChannel <- installC(args)
 		case "container":
-			if err := installContainer(args); err != nil {
-				errorsChannel <- err
-			}
+			errorsChannel <- installContainer(args)
 		case "cpp":
-			if err := installCpp(args); err != nil {
-				errorsChannel <- err
-			}
+			errorsChannel <- installCpp(args)
 		case "github":
-			if err := installGitHub(args); err != nil {
-				errorsChannel <- err
-			}
+			errorsChannel <- installGitHub(args)
 		case "gitlab":
-			if err := installGitLab(args); err != nil {
-				errorsChannel <- err
-			}
+			errorsChannel <- installGitLab(args)
 		case "golang":
-			if err := installGolang(args); err != nil {
-				errorsChannel <- err
-			}
+			errorsChannel <- installGolang(args)
 		case "java":
-			if err := installJava(args); err != nil {
-				errorsChannel <- err
-			}
+			errorsChannel <- installJava(args)
 		case "kubernetes":
-			if err := installKubernetes(args); err != nil {
-				errorsChannel <- err
-			}
+			errorsChannel <- installKubernetes(args)
 		case "node":
-			if err := installNode(args); err != nil {
-				errorsChannel <- err
-			}
+			errorsChannel <- installNode(args)
 		case "python":
-			if err := installPython(args); err != nil {
-				errorsChannel <- err
-			}
+			errorsChannel <- installPython(args)
 		case "rust":
-			if err := installRust(args); err != nil {
-				errorsChannel <- err
-			}
-
+			errorsChannel <- installRust(args)
 		default:
 			errorsChannel <- []error{fmt.Errorf("unknown toolchain: %s", toolchain)}
 		}
 	}
 	close(errorsChannel)
 	return utils.MergeErrors(errorsChannel)
-
 }

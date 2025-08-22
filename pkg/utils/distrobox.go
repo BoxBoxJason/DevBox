@@ -49,9 +49,7 @@ func ExportDistroboxBinaries(binaries []string) []error {
 	}
 	errorChan := make(chan error, len(binaries))
 	for _, binary := range binaries {
-		if err := ExportDistroboxBinary(binary); err != nil {
-			errorChan <- fmt.Errorf("failed to export binary %s: %w", binary, err)
-		}
+		errorChan <- ExportDistroboxBinary(binary)
 	}
 	close(errorChan)
 	return MergeErrors(errorChan)

@@ -3,7 +3,6 @@ package install
 import (
 	"devbox/internal/commands"
 	"devbox/pkg/utils"
-	"fmt"
 	"sync"
 )
 
@@ -14,6 +13,7 @@ var (
 		"make",
 		"gofmt",
 	}
+
 	// GOLANG_PACKAGES contains the Go packages to be installed using go install
 	// They will not be exported as they should already installed in the user's PATH
 	GOLANG_PACKAGES = []string{
@@ -58,13 +58,13 @@ var (
 // It also sets up the necessary environment variables for Go development.
 func installGolang(args *commands.SharedCmdArgs) []error {
 	// Set the Go development environment variables
-	err := utils.SystemEnvManager.Set(GOLANG_ENVIRONMENT)
-	if err != nil {
-		return []error{fmt.Errorf("failed to set Go development environment variables: %w", err)}
+	errs := utils.SystemEnvManager.Set(GOLANG_ENVIRONMENT)
+	if errs != nil {
+		return errs
 	}
 
 	// Install the Go toolchain binaries
-	errs := utils.SystemPackageManager.Install(GOLANG_EXPORTED_BINARIES)
+	errs = utils.SystemPackageManager.Install(GOLANG_EXPORTED_BINARIES)
 	if errs != nil {
 		return errs
 	}
@@ -78,9 +78,7 @@ func installGolang(args *commands.SharedCmdArgs) []error {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := utils.VSCODE_PACKAGE_MANAGER.Install(GOLANG_VSCODE_EXTENSIONS); err != nil {
-				errChan <- err
-			}
+			errChan <- utils.VSCODE_PACKAGE_MANAGER.Install(GOLANG_VSCODE_EXTENSIONS)
 		}()
 	}
 
@@ -89,9 +87,7 @@ func installGolang(args *commands.SharedCmdArgs) []error {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := utils.ExportDistroboxBinaries(GOLANG_EXPORTED_BINARIES); err != nil {
-				errChan <- err
-			}
+			errChan <- utils.ExportDistroboxBinaries(GOLANG_EXPORTED_BINARIES)
 		}()
 	}
 
@@ -99,9 +95,7 @@ func installGolang(args *commands.SharedCmdArgs) []error {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := GOLANG_PACKAGE_MANAGER.Install(GOLANG_PACKAGES); err != nil {
-			errChan <- err
-		}
+		errChan <- GOLANG_PACKAGE_MANAGER.Install(GOLANG_PACKAGES)
 	}()
 
 	// Wait for all goroutines to finish
