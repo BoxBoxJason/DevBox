@@ -14,7 +14,7 @@ func ReadFileLines(filePath string) ([]string, error) {
 	}
 	defer file.Close()
 
-	var lines []string
+	lines := []string{}
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
@@ -30,6 +30,7 @@ func ReadFileLines(filePath string) ([]string, error) {
 	return lines, nil
 }
 
+// FileEndsWithNewline checks if a file ends with a newline character
 func FileEndsWithNewline(filePath string) (bool, error) {
 	f, err := os.Open(filePath)
 	if err != nil {

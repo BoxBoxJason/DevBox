@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
 
 	"go.uber.org/zap"
 )
@@ -131,19 +130,4 @@ func Getenv(key string, defaultValue string) string {
 		value = defaultValue
 	}
 	return value
-}
-
-func Setenv(key string, value string) error {
-	// Use a shell to evaluate the value if it contains a $ sign (requires expansion)
-	if strings.Contains(value, "$") {
-		cmd := exec.Command("echo", value)
-		output, err := cmd.Output()
-		if err != nil {
-			return fmt.Errorf("failed to evaluate env variable %s: %w", key, err)
-		}
-		value = strings.TrimSpace(string(output))
-	}
-
-	// Set the evaluated value as an environment variable
-	return os.Setenv(key, value)
 }

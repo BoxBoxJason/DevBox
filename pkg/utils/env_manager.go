@@ -57,7 +57,7 @@ func (em *EnvManager) Set(variables map[string]string) []error {
 	unsetVariables := make(map[string]string, len(variables))
 	for key, value := range variables {
 		variableValue, exists := em.variables[key]
-		if !(exists && variableValue == value) {
+		if !exists || variableValue != value {
 			unsetVariables[key] = value
 		}
 	}
@@ -152,7 +152,7 @@ func (em *EnvManager) AppendToEnvFile(envVars map[string]string) []error {
 func (em *EnvManager) ReloadEnvFile() []error {
 	errorChan := make(chan error, len(em.variables))
 	for key, value := range em.variables {
-		errorChan <- Setenv(key, value)
+		errorChan <- os.Setenv(key, os.ExpandEnv(value))
 	}
 	close(errorChan)
 	return MergeErrors(errorChan)
