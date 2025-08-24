@@ -104,16 +104,16 @@ func IsDistroboxApplicationExported(appName string) (bool, error) {
 
 // ExportDistroboxApplications exports a list of applications from the distrobox to the host system.
 // It returns an error if the export fails.
-func ExportDistroboxApplications(apps []string) error {
+func ExportDistroboxApplications(apps []string) []error {
 	if !distroboxExportAvailable {
-		return errors.New(DISTROBOX_NOT_AVAILABLE_ERROR)
+		return []error{errors.New(DISTROBOX_NOT_AVAILABLE_ERROR)}
 	}
+	errorChan := make(chan error, len(apps))
 	for _, app := range apps {
-		if err := ExportDistroboxApplication(app); err != nil {
-			return fmt.Errorf("failed to export application %s: %w", app, err)
-		}
+		errorChan <- ExportDistroboxApplication(app)
 	}
-	return nil
+	close(errorChan)
+	return MergeErrors(errorChan)
 }
 
 // ExportDistroboxApplication exports an application from the distrobox to the host system.

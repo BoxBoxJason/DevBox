@@ -3,6 +3,7 @@ package install
 import (
 	"devbox/internal/commands"
 	"devbox/pkg/utils"
+	"devbox/pkg/vscode"
 	"sync"
 )
 
@@ -25,6 +26,9 @@ var (
 		"golang.org/x/tools/cmd/godoc@latest",
 		"golang.org/x/tools/cmd/cover@latest",
 		"github.com/go-delve/delve/cmd/dlv@latest",
+		"github.com/cweill/gotests/gotests@latest",
+		"github.com/fatih/gomodifytags@latest",
+		"github.com/josharian/impl@latest",
 	}
 
 	// GOLANG_ENVIRONMENT contains the environment variables to be set for Golang development
@@ -51,6 +55,11 @@ var (
 	GOLANG_VSCODE_EXTENSIONS = []string{
 		"golang.go",
 	}
+
+	GOLANG_VSCODE_SETTINGS = map[string]any{
+		"go.lintTool":                   "golangci-lint",
+		"go.toolsManagement.autoUpdate": true,
+	}
 )
 
 // installGolang installs the entire Golang development toolchain and environment.
@@ -75,10 +84,15 @@ func installGolang(args *commands.SharedCmdArgs) []error {
 
 	// Install the VSCode extensions for Go development
 	if !args.SkipIde {
-		wg.Add(1)
+		wg.Add(2)
 		go func() {
 			defer wg.Done()
 			errChan <- utils.VSCODE_PACKAGE_MANAGER.Install(GOLANG_VSCODE_EXTENSIONS)
+		}()
+
+		go func() {
+			defer wg.Done()
+			errChan <- []error{vscode.SystemVSCode.UpdateSettings(GOLANG_VSCODE_SETTINGS)}
 		}()
 	}
 

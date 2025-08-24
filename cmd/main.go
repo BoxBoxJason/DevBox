@@ -2,6 +2,7 @@ package main
 
 import (
 	"devbox/internal/commands/install"
+	"devbox/internal/commands/setup"
 	"devbox/pkg/utils"
 	"strings"
 
@@ -19,7 +20,7 @@ var (
 	args ParserArgs
 
 	mainCmd = &cobra.Command{
-		Use:     "devbox",
+		Use:     "devbox {setup|install|share} [flags]",
 		Version: version,
 		Short:   "devbox is the package manager for the distrobox ecosystem",
 		Long: `devbox is the package manager for the distrobox ecosystem.
@@ -32,15 +33,21 @@ It helps you install packages on your distrobox and export them to your host sys
 	}
 
 	setupCmd = &cobra.Command{
-		Use:   "setup",
+		Use:   "setup [--skip-ide] [--verbose] [--log-file <PATH>] [--no-export]",
 		Short: "Setup the devbox by installing the minimum required packages",
 		Long: `Setup the devbox by installing the minimum required packages.
 This command will install the necessary packages to get started with devbox.
 It installs the minimal required packages to start developing with devbox.`,
+		Run: func(cmd *cobra.Command, commandArgs []string) {
+			errs := setup.SetupDevbox(&args.SharedCmdArgs)
+			if errs != nil {
+				zap.L().Fatal("Failed to setup devbox", zap.Errors("errors", errs))
+			}
+		},
 	}
 
 	installCmd = &cobra.Command{
-		Use:   "install [--file <PATH>] [toolchain...]",
+		Use:   "install [--skip-ide] [--no-export] [--file <PATH>] [toolchain...]",
 		Short: "Install a language toolchain or a package",
 		Long: `Install a language toolchain or a package.
 Supports installing language toolchains for Bash, Go, Rust, Python, Node, Kubernetes, Container, Java, GitLab, GitHub, C, C++`,
