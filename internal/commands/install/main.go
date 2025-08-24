@@ -26,7 +26,7 @@ func InstallToolchains(args *commands.SharedCmdArgs, toolchains ...string) []err
 		case "c":
 			errorsChannel <- installC(args)
 		case "container":
-			errorsChannel <- installContainer(args)
+			errorsChannel <- CONTAINER_INSTALLABLE_TOOLCHAIN.Install(args)
 		case "cpp":
 			errorsChannel <- installCpp(args)
 		case "github":

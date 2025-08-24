@@ -3,17 +3,34 @@ package install
 import "devbox/internal/commands"
 
 var (
-	// CONTAINER_BINARIES contains the binaries to be exported for Container tools
-	CONTAINER_BINARIES = []string{
-		"podman",
-		"hadolint",
-		"trivy",
+	CONTAINER_INSTALLABLE_TOOLCHAIN = &commands.InstallableToolchain{
+		Name:        "container",
+		Description: "Container development environment",
+		ExportedBinaries: []string{
+			"podman",
+			"hadolint",
+			"trivy",
+			"podman-compose",
+		},
+		ExportedApplications: []string{
+			"podman-desktop",
+		},
+		EnvironmentVariables: map[string]string{},
+		PackageManager:       nil,
+		VSCodeExtensions: []string{
+			"ms-azuretools.vscode-docker",
+			"docker.docker",
+			"exiasr.hadolint",
+		},
+		VSCodeSettings: map[string]any{
+			"containers.composeCommand":                     "podman compose",
+			"containers.containerClient":                    "com.microsoft.visualstudio.containers.podman",
+			"containers.containerCommand":                   "podman",
+			"containers.orchestratorClient":                 "com.microsoft.visualstudio.orchestrators.podmancompose",
+			"docker.lsp.experimental.scout.notPinnedDigest": true,
+			"docker.lsp.experimental.scout.recommendedTag":  true,
+			"docker.lsp.telemetry":                          "off",
+			"hadolint.outputLevel":                          "hint",
+		},
 	}
 )
-
-// installContainer installs the entire Container development toolchain and environment.
-// It installs the Container binaries and packages, ensuring they are available in the user's PATH.
-// It also sets up the necessary environment variables for Container development.
-func installContainer(args *commands.SharedCmdArgs) []error {
-	return nil
-}
