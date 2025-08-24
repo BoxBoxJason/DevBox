@@ -34,10 +34,26 @@ var (
 	DEFAULT_VSCODE_EXTENSIONS = []string{
 		"davidanson.vscode-markdownlint",
 		"bierner.markdown-mermaid",
+		"fill-labs.dependi",
 	}
 
 	// DEFAULT_VSCODE_SETTINGS contains the default VSCode settings to be applied
 	DEFAULT_VSCODE_SETTINGS = map[string]any{
+		"dependi.rust.informPatchUpdates":                                   true,
+		"dependi.npm.informPatchUpdates":                                    true,
+		"dependi.npm.indexServerURL":                                        "https://registry.npmjs.org",
+		"dependi.rust.indexServerURL":                                       "https://index.crates.io",
+		"dependi.go.indexServerURL":                                         "https://proxy.golang.org",
+		"dependi.go.informPatchUpdates":                                     true,
+		"dependi.python.indexServerURL":                                     "https://pypi.org/pypi",
+		"dependi.python.informPatchUpdates":                                 true,
+		"dependi.php.indexServerURL":                                        "https://repo.packagist.org",
+		"dependi.php.informPatchUpdates":                                    true,
+		"dependi.dart.indexServerURL":                                       "https://pub.dev",
+		"dependi.dart.informPatchUpdates":                                   true,
+		"dependi.vulnerability.ghsa.enabled":                                true,
+		"dependi.vulnerability.osvQueryURL.batch":                           "https://api.osv.dev/v1/querybatch",
+		"dependi.vulnerability.osvQueryURL.single":                          "https://api.osv.dev/v1/query",
 		"diffEditor.ignoreTrimWhitespace":                                   true,
 		"diffEditor.experimental.showMoves":                                 true,
 		"diffEditor.experimental.useTrueInlineView":                         true,
