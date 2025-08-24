@@ -20,9 +20,7 @@ func InstallToolchains(args *commands.SharedCmdArgs, toolchains ...string) []err
 	for _, toolchain := range toolchains {
 		switch toolchain {
 		case "bash":
-			if err := installBash(args); err != nil {
-				errorsChannel <- err
-			}
+			errorsChannel <- BASH_INSTALLABLE_TOOLCHAIN.Install(args)
 		case "c":
 			errorsChannel <- installC(args)
 		case "container":

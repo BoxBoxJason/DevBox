@@ -3,19 +3,25 @@ package install
 import "devbox/internal/commands"
 
 var (
-	// BASH_BINARIES contains the binaries to be exported for Bash
-	BASH_BINARIES = []string{
-		"bash",
-		"shfmt",
-		"shellcheck",
-		"zsh",
-		"fish",
+	// BASH_INSTALLABLE_TOOLCHAIN is the installable toolchain for Bash
+	BASH_INSTALLABLE_TOOLCHAIN = &commands.InstallableToolchain{
+		Name:        "bash",
+		Description: "Bash development environment",
+		ExportedBinaries: []string{
+			"bash",
+			"shfmt",
+			"shellcheck",
+			"zsh",
+			"fish",
+		},
+		PackageManager: nil,
+		VSCodeExtensions: []string{
+			"timonwong.shellcheck",
+			"foxundermoon.shell-format",
+		},
+		VSCodeSettings: map[string]any{
+			"shellcheck.run":                   "onSave",
+			"shellcheck.useWorkspaceRootAsCwd": true,
+		},
 	}
 )
-
-// installBash installs the entire Bash development toolchain and environment.
-// It installs the Bash binaries and packages, ensuring they are available in the user's PATH.
-// It also sets up the necessary environment variables for Bash development.
-func installBash(args *commands.SharedCmdArgs) []error {
-	return nil
-}

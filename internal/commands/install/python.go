@@ -47,6 +47,7 @@ var (
 		VSCodeSettings: map[string]any{
 			"python.analysis.autoImportCompletions":                     true,
 			"python.analysis.completeFunctionParens":                    true,
+			"python.analysis.typeCheckingMode":                          "strict",
 			"python.analysis.typeEvaluation.deprecateTypingAliases":     true,
 			"python.analysis.typeEvaluation.enableReachabilityAnalysis": true,
 			"python.analysis.typeEvaluation.strictDictionaryInference":  true,
