@@ -1,7 +1,8 @@
-package utils
+package envmanager
 
 import (
 	"bufio"
+	"devbox/pkg/utils"
 	"fmt"
 	"maps"
 	"os"
@@ -12,40 +13,44 @@ import (
 )
 
 var (
-	SystemEnvManager *EnvManager = nil
+	DEFAULT_SYS_ENV_FILE             = strings.TrimSpace(utils.Getenv("DEVBOX_ENV_FILE", fmt.Sprintf("%s/00-env-devbox.zsh", utils.Getenv("ZSH_CUSTOM", path.Join(os.Getenv("HOME"), ".oh-my-zsh/custom")))))
+	systemEnvManager     *EnvManager = nil
 )
 
-func init() {
+func SystemEnvManager(envFile string) *EnvManager {
+	if systemEnvManager != nil {
+		return systemEnvManager
+	}
+
 	// Retrieve environment manager file
-	sysEnvFile := strings.TrimSpace(Getenv("DEVBOX_ENV_FILE", fmt.Sprintf("%s/00-env-devbox.zsh", Getenv("ZSH_CUSTOM", path.Join(os.Getenv("HOME"), ".oh-my-zsh/custom")))))
-	if sysEnvFile == "" {
+	if envFile == "" {
 		zap.L().Fatal("DEVBOX_ENV_FILE is set to an empty string, please set it to a valid file path")
 	}
 
 	var envManager *EnvManager
 
-	if envFileInfo, err := os.Stat(sysEnvFile); os.IsNotExist(err) {
+	if envFileInfo, err := os.Stat(envFile); os.IsNotExist(err) {
 		// If the file does not exist, create it
-		if err := os.WriteFile(sysEnvFile, []byte{}, 0600); err != nil {
-			zap.L().Fatal("Failed to create env file", zap.String("file", sysEnvFile), zap.Error(err))
+		if err := os.WriteFile(envFile, []byte{}, 0600); err != nil {
+			zap.L().Fatal("Failed to create env file", zap.String("file", envFile), zap.Error(err))
 		}
 	} else if err != nil {
-		zap.L().Fatal("Failed to stat env file", zap.String("file", sysEnvFile), zap.Error(err))
+		zap.L().Fatal("Failed to stat env file", zap.String("file", envFile), zap.Error(err))
 	} else if envFileInfo.IsDir() {
-		zap.L().Fatal("DEVBOX_ENV_FILE points to a directory, expected a file", zap.String("file", sysEnvFile))
+		zap.L().Fatal("DEVBOX_ENV_FILE points to a directory, expected a file", zap.String("file", envFile))
 	} else if envFileInfo.Mode()&os.ModeType != 0 {
-		zap.L().Fatal("DEVBOX_ENV_FILE points to a special file, expected a regular file", zap.String("file", sysEnvFile))
+		zap.L().Fatal("DEVBOX_ENV_FILE points to a special file, expected a regular file", zap.String("file", envFile))
 	} else if envFileInfo.Mode()&0600 == 0 {
-		zap.L().Fatal("DEVBOX_ENV_FILE does not have the correct permissions, expected 0600", zap.String("file", sysEnvFile))
+		zap.L().Fatal("DEVBOX_ENV_FILE does not have the correct permissions, expected 0600", zap.String("file", envFile))
 	}
 	envManager = &EnvManager{
-		file: sysEnvFile,
+		file: envFile,
 	}
 	if err := envManager.parseEnvFile(); err != nil {
-		zap.L().Fatal("Failed to parse env file", zap.String("file", sysEnvFile), zap.Error(err))
+		zap.L().Fatal("Failed to parse env file", zap.String("file", envFile), zap.Error(err))
 	}
 
-	SystemEnvManager = envManager
+	return envManager
 }
 
 type EnvManager struct {
@@ -69,7 +74,6 @@ func (em *EnvManager) Set(variables map[string]string) []error {
 		// Update the in-memory map with the new variables
 		maps.Copy(em.variables, unsetVariables)
 
-		// Load the new variables into the current environment
 		return em.ReloadEnvFile()
 	}
 	return nil
@@ -99,8 +103,8 @@ func (em *EnvManager) parseEnvFile() error {
 			parts := strings.SplitN(line, "=", 2)
 			if len(parts) == 2 {
 				// Trim whitespace AND quotes (simple or double) from key and value.
-				key := trimSpacesAndQuotes(parts[0])
-				value := trimSpacesAndQuotes(parts[1])
+				key := utils.TrimSpacesAndQuotes(parts[0])
+				value := utils.TrimSpacesAndQuotes(parts[1])
 
 				vars[key] = value
 			}
@@ -117,7 +121,7 @@ func (em *EnvManager) parseEnvFile() error {
 func (em *EnvManager) AppendToEnvFile(envVars map[string]string) []error {
 	zap.L().Info("Appending environment variables to file", zap.String("file", em.file), zap.Any("variables", envVars))
 
-	fileEndsWithNewline, err := FileEndsWithNewline(em.file)
+	fileEndsWithNewline, err := utils.FileEndsWithNewline(em.file)
 	if err != nil {
 		return []error{fmt.Errorf("failed to check if env file ends with newline: %w", err)}
 	}
@@ -144,7 +148,7 @@ func (em *EnvManager) AppendToEnvFile(envVars map[string]string) []error {
 		}
 	}
 	close(errorChan)
-	return MergeErrors(errorChan)
+	return utils.MergeErrors(errorChan)
 }
 
 // ReloadEnvFile loads / reloads the environment variables from the current cached variables.
@@ -155,5 +159,5 @@ func (em *EnvManager) ReloadEnvFile() []error {
 		errorChan <- os.Setenv(key, os.ExpandEnv(value))
 	}
 	close(errorChan)
-	return MergeErrors(errorChan)
+	return utils.MergeErrors(errorChan)
 }

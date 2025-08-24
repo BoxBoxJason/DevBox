@@ -2,6 +2,7 @@ package install
 
 import (
 	"devbox/internal/commands"
+	"devbox/internal/envmanager"
 	"devbox/pkg/utils"
 	"devbox/pkg/vscode"
 	"sync"
@@ -57,6 +58,10 @@ var (
 	}
 
 	GOLANG_VSCODE_SETTINGS = map[string]any{
+		"go.coverMode":                  "atomic",
+		"go.coverOnSingleTestFile":      true,
+		"go.coverOnSingleTest":          true,
+		"go.diagnostic.vulncheck":       "Imports",
 		"go.lintTool":                   "golangci-lint",
 		"go.toolsManagement.autoUpdate": true,
 	}
@@ -67,7 +72,7 @@ var (
 // It also sets up the necessary environment variables for Go development.
 func installGolang(args *commands.SharedCmdArgs) []error {
 	// Set the Go development environment variables
-	errs := utils.SystemEnvManager.Set(GOLANG_ENVIRONMENT)
+	errs := envmanager.SystemEnvManager(envmanager.DEFAULT_SYS_ENV_FILE).Set(GOLANG_ENVIRONMENT)
 	if errs != nil {
 		return errs
 	}
@@ -80,7 +85,7 @@ func installGolang(args *commands.SharedCmdArgs) []error {
 
 	// Use a WaitGroup to manage parallel installations
 	var wg sync.WaitGroup
-	errChan := make(chan []error, 3) // Channel to collect errors from goroutines
+	errChan := make(chan []error, 4) // Channel to collect errors from goroutines
 
 	// Install the VSCode extensions for Go development
 	if !args.SkipIde {

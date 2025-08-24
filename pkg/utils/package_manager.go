@@ -12,7 +12,7 @@ var (
 	VSCODE_PACKAGE_MANAGER = &PackageManager{
 		Name:             "code",
 		InstallCmd:       "--install-extension",
-		NoInteractiveArg: strPtr("--force"),
+		NoInteractiveArg: StrPtr("--force"),
 		MultiInstall:     false,
 		SudoRequired:     false,
 	}
