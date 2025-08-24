@@ -11,7 +11,7 @@ import (
 
 func InstallToolchains(args *commands.SharedCmdArgs, toolchains ...string) []error {
 	zap.L().Debug("Installing toolchains", zap.Strings("toolchains", toolchains))
-	errorsChannel := make(chan []error, len(toolchains)*2+1)
+	errorsChannel := make(chan []error, len(toolchains)+1)
 	err := utils.LoadEnv(setup.DEFAULT_ENVIRONMENT)
 	if err != nil {
 		zap.L().Warn("Failed to load default environment variables", zap.Errors("errors", err))
@@ -32,7 +32,7 @@ func InstallToolchains(args *commands.SharedCmdArgs, toolchains ...string) []err
 		case "github":
 			errorsChannel <- installGitHub(args)
 		case "gitlab":
-			errorsChannel <- installGitLab(args)
+			errorsChannel <- GITLAB_INSTALLABLE_TOOLCHAIN.Install(args)
 		case "golang":
 			errorsChannel <- GOLANG_INSTALLABLE_TOOLCHAIN.Install(args)
 		case "java":
