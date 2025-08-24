@@ -3,6 +3,7 @@ package utils
 import (
 	"bufio"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -50,4 +51,23 @@ func FileEndsWithNewline(filePath string) (bool, error) {
 		return false, err
 	}
 	return buf[0] == '\n', nil
+}
+
+// CreateFileIfNotExists creates a file if it does not exist
+func CreateFileIfNotExists(filePath string, content []byte) error {
+	_, err := os.Stat(filePath)
+	if os.IsNotExist(err) {
+		// Create the directories if they do not exist
+		err = os.MkdirAll(filepath.Dir(filePath), 0700)
+		if err != nil {
+			return err
+		}
+
+		// Create the file
+		err = os.WriteFile(filePath, content, 0600)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

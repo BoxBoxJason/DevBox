@@ -2,6 +2,7 @@ package setup
 
 import (
 	"devbox/internal/commands"
+	"devbox/internal/envmanager"
 	"devbox/pkg/utils"
 	"devbox/pkg/vscode"
 	"sync"
@@ -15,7 +16,6 @@ var (
 	DEFAULT_DEV_BINARIES = []string{
 		"git",
 		"podman",
-		"markdownlint",
 		"tree",
 		"curl",
 		"wget",
@@ -30,7 +30,7 @@ var (
 
 	// DEFAULT_VSCODE_EXTENSIONS contains the default VSCode extensions to be installed
 	DEFAULT_VSCODE_EXTENSIONS = []string{
-		"avidanson.vscode-markdownlint",
+		"davidanson.vscode-markdownlint",
 		"bierner.markdown-mermaid",
 	}
 
@@ -60,6 +60,7 @@ var (
 		"git.enableSmartCommit":                                             true,
 		"telemetry.telemetryLevel":                                          "off",
 		"telemetry.feedback.enabled":                                        false,
+		"testing.coverageToolbarEnabled":                                    true,
 		"workbench.commandPalette.experimental.suggestCommands":             true,
 	}
 
@@ -83,29 +84,34 @@ var (
 
 func SetupDevbox(args *commands.SharedCmdArgs) []error {
 	// Set the development environment variables
-	errs := utils.SystemEnvManager.Set(DEFAULT_ENVIRONMENT)
+	errs := envmanager.SystemEnvManager(envmanager.DEFAULT_SYS_ENV_FILE).Set(DEFAULT_ENVIRONMENT)
 	if errs != nil {
 		return errs
 	}
 
 	// Use a WaitGroup to manage parallel installations
 	var wg sync.WaitGroup
-	errChan := make(chan []error, 3) // Channel to collect errors from goroutines
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		// Install generic utility software development / unix binaries
-		errChan <- utils.SystemPackageManager.Install(DEFAULT_DEV_BINARIES)
-	}()
+	// compute channel capacity to avoid blocking sends (which would prevent wg.Done() from running)
+	maxSends := 1 // initial binaries goroutine
+	if !args.SkipIde {
+		maxSends += 2 // vscode extension install + settings update
+	}
+	if !args.NoExport {
+		maxSends += 2 // export binaries + export apps
+	}
+	errChan := make(chan []error, maxSends) // Channel to collect errors from goroutines
+
+	if !args.SkipIde {
+		DEFAULT_DEV_BINARIES = append(DEFAULT_DEV_BINARIES, DEFAULT_IDE)
+		DEFAULT_DEV_APPS = append(DEFAULT_DEV_APPS, DEFAULT_IDE)
+	}
+
+	// Install generic utility software development / unix binaries
+	errChan <- utils.SystemPackageManager.Install(DEFAULT_DEV_BINARIES)
 
 	// Install the VSCode extensions for Go development
 	if !args.SkipIde {
-		errs := utils.SystemPackageManager.Install([]string{DEFAULT_IDE})
-		if errs != nil {
-			return errs
-		}
-
 		wg.Add(2)
 		go func() {
 			defer wg.Done()
@@ -131,18 +137,6 @@ func SetupDevbox(args *commands.SharedCmdArgs) []error {
 			defer wg.Done()
 			errChan <- utils.ExportDistroboxApplications(DEFAULT_DEV_APPS)
 		}()
-
-		if !args.SkipIde {
-			wg.Add(2)
-			go func() {
-				defer wg.Done()
-				errChan <- utils.ExportDistroboxApplications([]string{DEFAULT_IDE})
-			}()
-			go func() {
-				defer wg.Done()
-				errChan <- utils.ExportDistroboxBinaries([]string{DEFAULT_IDE})
-			}()
-		}
 	}
 
 	// Wait for all goroutines to finish

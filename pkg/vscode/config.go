@@ -1,6 +1,7 @@
 package vscode
 
 import (
+	"devbox/pkg/utils"
 	"encoding/json"
 	"fmt"
 	"maps"
@@ -13,15 +14,8 @@ import (
 )
 
 var (
-	SystemVSCode *VSCode = nil
+	SystemVSCode *VSCode = &VSCode{SettingsFile: nil}
 )
-
-func init() {
-	SystemVSCode = &VSCode{}
-	if err := SystemVSCode.FindVSCodeSettings(); err != nil {
-		zap.L().Error("Failed to locate VSCode settings.json", zap.Error(err))
-	}
-}
 
 type VSCode struct {
 	SettingsFile *string
@@ -41,21 +35,25 @@ func (code *VSCode) FindVSCodeSettings() error {
 
 	// Determine the OS and add potential paths
 	zap.L().Debug("Detecting VSCode settings.json path for OS", zap.String("os", runtime.GOOS))
+	var defaultPath string
 	switch runtime.GOOS {
 	case "windows":
 		// Default Windows path
 		appData := os.Getenv("APPDATA")
+		defaultPath = filepath.Join(appData, "Code", "User", "settings.json")
 		if appData != "" {
-			paths = append(paths, filepath.Join(appData, "Code", "User", "settings.json"))
+			paths = append(paths, defaultPath)
 		}
 
 	case "darwin":
 		// Default macOS path
-		paths = append(paths, filepath.Join(os.Getenv("HOME"), "Library", "Application Support", "Code", "User", "settings.json"))
+		defaultPath = filepath.Join(os.Getenv("HOME"), "Library", "Application Support", "Code", "User", "settings.json")
+		paths = append(paths, defaultPath)
 
 	case "linux":
+		defaultPath = filepath.Join(os.Getenv("HOME"), ".config", "Code", "User", "settings.json")
 		// Default Linux path
-		paths = append(paths, filepath.Join(os.Getenv("HOME"), ".config", "Code", "User", "settings.json"))
+		paths = append(paths, defaultPath)
 
 		// Flatpak-specific path
 		paths = append(paths, filepath.Join(os.Getenv("HOME"), ".var", "app", "com.visualstudio.code", "config", "Code", "User", "settings.json"))
@@ -68,25 +66,41 @@ func (code *VSCode) FindVSCodeSettings() error {
 			return nil
 		}
 	}
+	// If no valid path is found, issue a warning and set the default path
+	zap.L().Warn("VSCode settings.json file not found in standard locations, using default path for OS", zap.String("default_path", defaultPath), zap.String("OS", runtime.GOOS))
 
-	return fmt.Errorf("settings.json file not found in standard locations")
+	zap.L().Warn("Creating directories if they do not exist", zap.String("path", defaultPath))
+
+	// Ensure the file exists
+	code.SettingsFile = &defaultPath
+	return utils.CreateFileIfNotExists(defaultPath, []byte("{}"))
 }
 
 // UpdateSettings updates the VS Code settings.json file with the provided settings.
 func (code *VSCode) UpdateSettings(newSettings map[string]any) error {
 	if code.SettingsFile == nil {
-		return fmt.Errorf("settings file path is not set")
+		err := code.FindVSCodeSettings()
+		if err != nil {
+			errMsg := fmt.Errorf("failed to locate VSCode settings file: %w", err)
+			zap.L().Error(errMsg.Error())
+			return errMsg
+		}
 	}
 
 	// Read existing settings
+	zap.L().Debug("Reading existing VSCode settings", zap.String("file", *code.SettingsFile))
 	existingSettings := make(map[string]any)
 	data, err := os.ReadFile(*code.SettingsFile)
 	if err != nil {
-		return fmt.Errorf("failed to read settings file: %w", err)
+		errMsg := fmt.Errorf("failed to read settings file: %w", err)
+		zap.L().Error(errMsg.Error(), zap.String("file", *code.SettingsFile))
+		return errMsg
 	}
 
 	if err := json.Unmarshal(data, &existingSettings); err != nil {
-		return fmt.Errorf("failed to parse existing settings: %w", err)
+		errMsg := fmt.Errorf("failed to parse existing settings: %w", err)
+		zap.L().Error(errMsg.Error(), zap.String("file", *code.SettingsFile))
+		return errMsg
 	}
 
 	// Update settings with new values
@@ -95,11 +109,16 @@ func (code *VSCode) UpdateSettings(newSettings map[string]any) error {
 	// Write updated settings back to the file
 	updatedData, err := json.MarshalIndent(existingSettings, "", "  ")
 	if err != nil {
-		return fmt.Errorf("failed to serialize updated settings: %w", err)
+		errMsg := fmt.Errorf("failed to serialize updated settings: %w", err)
+		zap.L().Error(errMsg.Error(), zap.String("file", *code.SettingsFile))
+		return errMsg
 	}
 
-	if err := os.WriteFile(*code.SettingsFile, updatedData, 0644); err != nil {
-		return fmt.Errorf("failed to write updated settings to file: %w", err)
+	zap.L().Debug("Writing updated VSCode settings", zap.String("file", *code.SettingsFile))
+	if err := os.WriteFile(*code.SettingsFile, updatedData, 0600); err != nil {
+		errMsg := fmt.Errorf("failed to write updated settings to file: %w", err)
+		zap.L().Error(errMsg.Error(), zap.String("file", *code.SettingsFile))
+		return errMsg
 	}
 
 	return nil
