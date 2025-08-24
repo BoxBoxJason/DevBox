@@ -3,17 +3,28 @@ package install
 import "devbox/internal/commands"
 
 var (
-	// GITHUB_BINARIES contains the binaries to be exported for GitHub
-	GITHUB_BINARIES = []string{
-		"gh",
-		"hub",
-		"git-lfs",
+	// GITHUB_INSTALLABLE_TOOLCHAIN is the installable toolchain for GitHub
+	GITHUB_INSTALLABLE_TOOLCHAIN = &commands.InstallableToolchain{
+		Name:        "github",
+		Description: "GitHub development environment",
+		ExportedBinaries: []string{
+			"gh",
+			"hub",
+			"git-lfs",
+		},
+		ExportedApplications: []string{},
+		PackageManager:       nil,
+		VSCodeExtensions: []string{
+			"github.vscode-pull-request-github",
+			"github.copilot",
+			"github.vscode-github-actions",
+			"redhat.vscode-yaml",
+		},
+		VSCodeSettings: map[string]any{
+			"yaml.format.printWidth":                          100,
+			"github-actions.workflows.pinned.refresh.enabled": true,
+			"githubPullRequests.defaultMergeMethod":           "rebase",
+			"githubPullRequests.notifications":                "pullRequests",
+		},
 	}
 )
-
-// installGitHub installs the entire GitHub development toolchain and environment.
-// It installs the GitHub binaries and packages, ensuring they are available in the user's PATH.
-// It also sets up the necessary environment variables for GitHub development.
-func installGitHub(args *commands.SharedCmdArgs) []error {
-	return nil
-}

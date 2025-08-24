@@ -30,7 +30,7 @@ func InstallToolchains(args *commands.SharedCmdArgs, toolchains ...string) []err
 		case "cpp":
 			errorsChannel <- installCpp(args)
 		case "github":
-			errorsChannel <- installGitHub(args)
+			errorsChannel <- GITHUB_INSTALLABLE_TOOLCHAIN.Install(args)
 		case "gitlab":
 			errorsChannel <- GITLAB_INSTALLABLE_TOOLCHAIN.Install(args)
 		case "golang":
