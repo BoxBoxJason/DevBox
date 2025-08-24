@@ -2,6 +2,7 @@ package install
 
 import (
 	"devbox/internal/commands"
+	"devbox/internal/commands/setup"
 	"devbox/pkg/utils"
 	"fmt"
 
@@ -10,7 +11,12 @@ import (
 
 func InstallToolchains(args *commands.SharedCmdArgs, toolchains ...string) []error {
 	zap.L().Debug("Installing toolchains", zap.Strings("toolchains", toolchains))
-	errorsChannel := make(chan []error, len(toolchains))
+	errorsChannel := make(chan []error, len(toolchains)*2+1)
+	err := utils.LoadEnv(setup.DEFAULT_ENVIRONMENT)
+	if err != nil {
+		zap.L().Warn("Failed to load default environment variables", zap.Errors("errors", err))
+		errorsChannel <- err
+	}
 	for _, toolchain := range toolchains {
 		switch toolchain {
 		case "bash":
@@ -28,7 +34,7 @@ func InstallToolchains(args *commands.SharedCmdArgs, toolchains ...string) []err
 		case "gitlab":
 			errorsChannel <- installGitLab(args)
 		case "golang":
-			errorsChannel <- installGolang(args)
+			errorsChannel <- GOLANG_INSTALLABLE_TOOLCHAIN.Install(args)
 		case "java":
 			errorsChannel <- installJava(args)
 		case "kubernetes":
@@ -36,7 +42,7 @@ func InstallToolchains(args *commands.SharedCmdArgs, toolchains ...string) []err
 		case "node":
 			errorsChannel <- installNode(args)
 		case "python":
-			errorsChannel <- installPython(args)
+			errorsChannel <- PYTHON_INSTALLABLE_TOOLCHAIN.Install(args)
 		case "rust":
 			errorsChannel <- installRust(args)
 		default:

@@ -1,29 +1,62 @@
 package install
 
-import "devbox/internal/commands"
-
-var (
-	// PYTHON_BINARIES contains the binaries to be exported for Python
-	PYTHON_BINARIES = []string{
-		"python",
-		"pip",
-	}
-	// PYTHON_PACKAGES contains the Python packages to be installed using pip
-	// They will not be exported as they should already installed in the user's PATH
-	PYTHON_PACKAGES = []string{
-		"pylint",
-		"black",
-		"bandit",
-		"pytest",
-		"mypy",
-		"flake8",
-		"autopep8",
-	}
+import (
+	"devbox/internal/commands"
+	"devbox/pkg/utils"
 )
 
-// installPython installs the entire Python development toolchain and environment.
-// It installs the Python binaries and packages, ensuring they are available in the user's PATH.
-// It also sets up the necessary environment variables for Python development.
-func installPython(args *commands.SharedCmdArgs) []error {
-	return nil
-}
+var (
+	PYTHON_INSTALLABLE_TOOLCHAIN = &commands.InstallableToolchain{
+		Name:        "python",
+		Description: "Python development environment",
+		ExportedBinaries: []string{
+			"python",
+			"pip",
+		},
+		ExportedApplications: []string{},
+		EnvironmentVariables: map[string]string{
+			"PIP_INDEX_URL":             "${PIP_INDEX_URL:-https://pypi.org/simple}",
+			"PIP_BREAK_SYSTEM_PACKAGES": "${PIP_BREAK_SYSTEM_PACKAGES:1}",
+			"PIP_CACHE_DIR":             "${PIP_CACHE_DIR:-${XDG_CACHE_HOME}/pip}",
+			"PYTHONUSERBASE":            "${PYTHONUSERBASE:-${XDG_DATA_HOME}/python}",
+			"PATH":                      "${PYTHONUSERBASE}/bin:${PATH}",
+		},
+		PackageManager: &utils.PackageManager{
+			Name:         "pip",
+			InstallCmd:   "install",
+			MultiInstall: true,
+			SudoRequired: false,
+		},
+		PackageManagerPackages: []string{
+			"pylint",
+			"black",
+			"bandit",
+			"pytest",
+			"mypy",
+			"flake8",
+			"autopep8",
+		},
+		VSCodeExtensions: []string{
+			"ms-python.python",
+			"ms-python.vscode-pylance",
+			"ms-python.debugpy",
+			"ms-python.vscode-python-envs",
+			"njpwerner.autodocstring",
+			"ms-python.pylint",
+		},
+		VSCodeSettings: map[string]any{
+			"python.analysis.autoImportCompletions":                     true,
+			"python.analysis.completeFunctionParens":                    true,
+			"python.analysis.typeEvaluation.deprecateTypingAliases":     true,
+			"python.analysis.typeEvaluation.enableReachabilityAnalysis": true,
+			"python.analysis.typeEvaluation.strictDictionaryInference":  true,
+			"python.analysis.typeEvaluation.strictListInference":        true,
+			"python.analysis.typeEvaluation.strictSetInference":         true,
+			"python.terminal.activateEnvInCurrentTerminal":              true,
+			"python.testing.pytestEnabled":                              true,
+			"python.testing.unittestEnabled":                            true,
+			"python.useEnvironmentsExtension":                           true,
+			"python-envs.terminal.showActivateButton":                   true,
+		},
+	}
+)

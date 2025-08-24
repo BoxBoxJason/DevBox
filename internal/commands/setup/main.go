@@ -6,6 +6,8 @@ import (
 	"devbox/pkg/utils"
 	"devbox/pkg/vscode"
 	"sync"
+
+	"go.uber.org/zap"
 )
 
 var (
@@ -79,6 +81,7 @@ var (
 		"CLICOLOR":        "${CLICOLOR:-1}",
 		"EDITOR":          "${EDITOR:-vim}",
 		"ARCHFLAGS":       "-arch $(uname -m)",
+		"PATH":            "${HOME}/.local/bin:${PATH}",
 	}
 )
 
@@ -143,5 +146,9 @@ func SetupDevbox(args *commands.SharedCmdArgs) []error {
 	wg.Wait()
 	close(errChan)
 
-	return utils.MergeErrors(errChan)
+	errs = utils.MergeErrors(errChan)
+	if len(errs) == 0 {
+		zap.L().Info("DevBox setup complete! Please make sure to restart your shell or run 'source ~/.zshrc' to apply the changes.")
+	}
+	return errs
 }
