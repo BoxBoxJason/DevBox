@@ -42,7 +42,7 @@ func InstallToolchains(args *commands.SharedCmdArgs, toolchains ...string) []err
 		case "python":
 			errorsChannel <- PYTHON_INSTALLABLE_TOOLCHAIN.Install(args)
 		case "rust":
-			errorsChannel <- installRust(args)
+			errorsChannel <- RUST_INSTALLABLE_TOOLCHAIN.Install(args)
 		default:
 			errorsChannel <- []error{fmt.Errorf("unknown toolchain: %s", toolchain)}
 		}
