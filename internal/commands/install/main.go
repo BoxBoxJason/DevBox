@@ -40,7 +40,7 @@ func InstallToolchains(args *commands.SharedCmdArgs, toolchains ...string) []err
 		case "kubernetes":
 			errorsChannel <- installKubernetes(args)
 		case "node":
-			errorsChannel <- installNode(args)
+			errorsChannel <- NODE_INSTALLABLE_TOOLCHAIN.Install(args)
 		case "python":
 			errorsChannel <- PYTHON_INSTALLABLE_TOOLCHAIN.Install(args)
 		case "rust":
