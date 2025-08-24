@@ -73,8 +73,6 @@ func (em *EnvManager) Set(variables map[string]string) []error {
 
 		// Update the in-memory map with the new variables
 		maps.Copy(em.variables, unsetVariables)
-
-		return em.ReloadEnvFile()
 	}
 	return nil
 }
@@ -146,17 +144,6 @@ func (em *EnvManager) AppendToEnvFile(envVars map[string]string) []error {
 		if _, err := wf.WriteString(line); err != nil {
 			errorChan <- fmt.Errorf("failed to write new variable to env file: %w", err)
 		}
-	}
-	close(errorChan)
-	return utils.MergeErrors(errorChan)
-}
-
-// ReloadEnvFile loads / reloads the environment variables from the current cached variables.
-// If a variable's value contains a $ sign, it will be interpreted by the shell.
-func (em *EnvManager) ReloadEnvFile() []error {
-	errorChan := make(chan error, len(em.variables))
-	for key, value := range em.variables {
-		errorChan <- os.Setenv(key, os.ExpandEnv(value))
 	}
 	close(errorChan)
 	return utils.MergeErrors(errorChan)

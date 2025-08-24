@@ -218,50 +218,6 @@ func Test_parseEnvFile_FileOpenError(t *testing.T) {
 	}
 }
 
-func Test_ReloadEnvFile_expandsEnvVars(t *testing.T) {
-	t.Parallel()
-	// ensure a clean environment for the keys we use
-	keys := []string{"T1_TEST", "T2_TEST", "T3_TEST"}
-	orig := make(map[string]string)
-	for _, k := range keys {
-		orig[k] = os.Getenv(k)
-		_ = os.Unsetenv(k)
-	}
-	// restore at end
-	defer func() {
-		for _, k := range keys {
-			if v := orig[k]; v != "" {
-				_ = os.Setenv(k, v)
-			} else {
-				_ = os.Unsetenv(k)
-			}
-		}
-	}()
-
-	em := &EnvManager{
-		variables: map[string]string{
-			"T1_TEST": "value1",
-			"T2_TEST": "$T1_TEST-suffix",
-			"T3_TEST": "$NON_EXISTENT_VAR",
-		},
-	}
-
-	errs := em.ReloadEnvFile()
-	if errs != nil && len(errs) > 0 {
-		t.Fatalf("expected no errors from ReloadEnvFile, got: %v", errs)
-	}
-
-	if got := os.Getenv("T1_TEST"); got != "value1" {
-		t.Fatalf("T1_TEST expected 'value1', got %q", got)
-	}
-	if got := os.Getenv("T2_TEST"); got != "value1-suffix" {
-		t.Fatalf("T2_TEST expected 'value1-suffix', got %q", got)
-	}
-	if got := os.Getenv("T3_TEST"); got != "" {
-		t.Fatalf("T3_TEST expected empty string for missing var expansion, got %q", got)
-	}
-}
-
 func Test_Set_noChange_and_withChange(t *testing.T) {
 	t.Parallel()
 	// no-change case
@@ -277,7 +233,7 @@ func Test_Set_noChange_and_withChange(t *testing.T) {
 			variables: map[string]string{"K": "v"},
 		}
 		before, _ := os.ReadFile(fp)
-		if errs := em.Set(map[string]string{"K": "v"}); errs != nil && len(errs) > 0 {
+		if errs := em.Set(map[string]string{"K": "v"}); len(errs) > 0 {
 			t.Fatalf("expected no errors for no-change Set, got: %v", errs)
 		}
 		after, _ := os.ReadFile(fp)
@@ -300,7 +256,7 @@ func Test_Set_noChange_and_withChange(t *testing.T) {
 			file:      fp,
 			variables: map[string]string{}, // start empty
 		}
-		if errs := em.Set(map[string]string{"NEW_TEST_VAR": "someval"}); errs != nil && len(errs) > 0 {
+		if errs := em.Set(map[string]string{"NEW_TEST_VAR": "someval"}); len(errs) > 0 {
 			t.Fatalf("expected no errors for Set, got: %v", errs)
 		}
 		// file should contain the export line
