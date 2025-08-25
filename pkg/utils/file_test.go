@@ -92,3 +92,38 @@ func Test_FileEndsWithNewline(t *testing.T) {
 		}
 	})
 }
+
+func Test_CreateFileIfNotExists(t *testing.T) {
+	fileContent := []byte("initial content")
+	t.Run("creates file if not exists", func(t *testing.T) {
+		t.Parallel()
+		dir := t.TempDir()
+		fp := filepath.Join(dir, "newfile.txt")
+		if err := CreateFileIfNotExists(fp, fileContent); err != nil {
+			t.Fatalf("CreateFileIfNotExists() returned error: %v", err)
+		}
+		if _, err := os.Stat(fp); os.IsNotExist(err) {
+			t.Fatalf("file was not created")
+		}
+	})
+
+	t.Run("does not overwrite existing file", func(t *testing.T) {
+		t.Parallel()
+		dir := t.TempDir()
+		fp := filepath.Join(dir, "existingfile.txt")
+		content := []byte("existing content")
+		if err := os.WriteFile(fp, content, 0644); err != nil {
+			t.Fatalf("failed to write temp file: %v", err)
+		}
+		if err := CreateFileIfNotExists(fp, fileContent); err != nil {
+			t.Fatalf("CreateFileIfNotExists() returned error: %v", err)
+		}
+		data, err := os.ReadFile(fp)
+		if err != nil {
+			t.Fatalf("failed to read file: %v", err)
+		}
+		if string(data) != string(content) {
+			t.Fatalf("file content was altered, got %s, want %s", string(data), string(content))
+		}
+	})
+}

@@ -67,12 +67,29 @@ func (em *EnvManager) Set(variables map[string]string) []error {
 		}
 	}
 	if len(unsetVariables) > 0 {
-		if err := em.AppendToEnvFile(unsetVariables); err != nil {
-			return err
+		// Append to file
+		if errs := em.AppendToEnvFile(unsetVariables); len(errs) > 0 {
+			return errs
+		}
+
+		// Ensure in-memory map exists
+		if em.variables == nil {
+			em.variables = make(map[string]string)
 		}
 
 		// Update the in-memory map with the new variables
 		maps.Copy(em.variables, unsetVariables)
+
+		// Also set them in the process environment
+		var setErrs []error
+		for k, v := range unsetVariables {
+			if err := os.Setenv(k, os.ExpandEnv(v)); err != nil {
+				setErrs = append(setErrs, fmt.Errorf("failed to set env %s: %w", k, err))
+			}
+		}
+		if len(setErrs) > 0 {
+			return setErrs
+		}
 	}
 	return nil
 }

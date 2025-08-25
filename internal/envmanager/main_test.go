@@ -273,7 +273,5 @@ func Test_Set_noChange_and_withChange(t *testing.T) {
 		if got := os.Getenv("NEW_TEST_VAR"); got != "someval" {
 			t.Fatalf("expected environment NEW_TEST_VAR=someval, got %q", got)
 		}
-		// cleanup
-		_ = os.Unsetenv("NEW_TEST_VAR")
 	}
 }

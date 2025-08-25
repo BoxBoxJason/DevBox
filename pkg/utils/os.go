@@ -132,6 +132,8 @@ func Getenv(key string, defaultValue string) string {
 	return value
 }
 
+// LoadEnv sets multiple environment variables provided in the map.
+// It returns a slice of errors encountered while setting the variables, if any.
 func LoadEnv(variables map[string]string) []error {
 	errorChan := make(chan error, len(variables))
 	for key, value := range variables {
