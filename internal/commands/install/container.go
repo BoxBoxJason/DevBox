@@ -6,14 +6,17 @@ var (
 	CONTAINER_INSTALLABLE_TOOLCHAIN = &commands.InstallableToolchain{
 		Name:        "container",
 		Description: "Container development environment",
-		ExportedBinaries: []string{
+		InstalledPackages: []string{
 			"podman",
 			"hadolint",
 			"trivy",
 			"podman-compose",
 		},
-		ExportedApplications: []string{
-			"podman-desktop",
+		ExportedBinaries: []string{
+			"podman",
+			"hadolint",
+			"trivy",
+			"podman-compose",
 		},
 		EnvironmentVariables: map[string]string{},
 		PackageManager:       nil,

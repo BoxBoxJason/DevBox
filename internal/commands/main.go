@@ -15,6 +15,7 @@ type SharedCmdArgs struct {
 type InstallableToolchain struct {
 	Name                   string
 	Description            string
+	InstalledPackages      []string
 	ExportedBinaries       []string
 	ExportedApplications   []string
 	PackageManager         *utils.PackageManager
@@ -22,18 +23,13 @@ type InstallableToolchain struct {
 	VSCodeExtensions       []string
 	VSCodeSettings         map[string]any
 	EnvironmentVariables   map[string]string
+	ExtraSteps             *func(args *SharedCmdArgs) []error
 }
 
 func (it *InstallableToolchain) Install(args *SharedCmdArgs) []error {
 	if len(it.EnvironmentVariables) > 0 {
-		// Load the environment variables for the toolchain
-		errs := utils.LoadEnv(it.EnvironmentVariables)
-		if errs != nil {
-			return errs
-		}
-
 		// Set the Go development environment variables in the system env file
-		errs = envmanager.SystemEnvManager(envmanager.DEFAULT_SYS_ENV_FILE).Set(it.EnvironmentVariables)
+		errs := envmanager.SystemEnvManager(envmanager.DEFAULT_SYS_ENV_FILE).Set(it.EnvironmentVariables)
 		if errs != nil {
 			return errs
 		}
@@ -46,7 +42,7 @@ func (it *InstallableToolchain) Install(args *SharedCmdArgs) []error {
 	}
 
 	var wg sync.WaitGroup
-	errChan := make(chan []error, 3)
+	errChan := make(chan []error, 4)
 
 	// Export the toolchain binaries to the user's environment
 	wg.Add(1)
@@ -71,7 +67,15 @@ func (it *InstallableToolchain) Install(args *SharedCmdArgs) []error {
 		}()
 	}
 
-	// Wait for all goroutines to finish
+	// Run any extra installation steps for the toolchain
+	if it.ExtraSteps != nil {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			errChan <- (*it.ExtraSteps)(args)
+		}()
+	}
+
 	wg.Wait()
 	close(errChan)
 
@@ -79,9 +83,8 @@ func (it *InstallableToolchain) Install(args *SharedCmdArgs) []error {
 }
 
 func (it *InstallableToolchain) InstallSystemPackages(args *SharedCmdArgs) []error {
-	mergedSystemPackages := append(it.ExportedBinaries, it.ExportedApplications...)
-	if len(mergedSystemPackages) > 0 {
-		return utils.SystemPackageManager.Install(mergedSystemPackages)
+	if len(it.InstalledPackages) > 0 {
+		return utils.SystemPackageManager.Install(it.InstalledPackages)
 	}
 	return nil
 }
