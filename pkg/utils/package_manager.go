@@ -52,6 +52,7 @@ func (pm *PackageManager) Install(packages []string) []error {
 		zap.L().Debug("Running command", zap.String("command", cmd.String()))
 		err := cmd.Run()
 		if err != nil {
+			zap.L().Error("Error installing packages", zap.Strings("packages", packages), zap.String("package_manager", pm.Name), zap.Error(err))
 			return []error{fmt.Errorf("failed to install packages using %s: %w, stderr: %s", pm.Name, err, stderr.String())}
 		}
 		zap.L().Info("Successfully installed packages", zap.Strings("packages", packages), zap.String("package_manager", pm.Name))
@@ -79,6 +80,7 @@ func (pm *PackageManager) Install(packages []string) []error {
 
 		zap.L().Debug("Running command", zap.String("command", cmd.String()))
 		if err := cmd.Run(); err != nil {
+			zap.L().Error("Error installing package", zap.String("package", pkg), zap.String("package_manager", pm.Name), zap.Error(err))
 			errorChan <- fmt.Errorf("failed to install package %s using %s: %w, stderr: %s", pkg, pm.Name, err, stderr.String())
 		} else {
 			zap.L().Info("Successfully installed package", zap.String("package", pkg), zap.String("package_manager", pm.Name))
