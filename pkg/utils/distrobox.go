@@ -59,9 +59,10 @@ func ExportDistroboxBinaries(binaries []string) []error {
 // It returns an error if the export fails.
 func ExportDistroboxBinary(binaryName string) error {
 	if !distroboxExportAvailable {
+		zap.L().Error(DISTROBOX_NOT_AVAILABLE_ERROR)
 		return errors.New(DISTROBOX_NOT_AVAILABLE_ERROR)
 	}
-	zap.L().Debug("Exporting binary from distrobox", zap.String("binary", binaryName))
+	zap.L().Info("Exporting binary from distrobox", zap.String("binary", binaryName))
 	// Check if the binary is already exported
 	exported, err := IsDistroboxBinaryExported(binaryName)
 	if err != nil {
@@ -96,6 +97,7 @@ func IsDistroboxApplicationExported(appName string) (bool, error) {
 	cmd := exec.Command(DISTROBOX_EXPORT_COMMAND, "--list-apps")
 	output, err := cmd.Output()
 	if err != nil {
+		zap.L().Error("Error listing exported applications", zap.String("application", appName), zap.Error(err))
 		return false, fmt.Errorf("failed to list exported applications: %w", err)
 	}
 
@@ -122,10 +124,11 @@ func ExportDistroboxApplication(appName string) error {
 	if !distroboxExportAvailable {
 		return errors.New(DISTROBOX_NOT_AVAILABLE_ERROR)
 	}
-	zap.L().Debug("Exporting application from distrobox", zap.String("application", appName))
+	zap.L().Info("Exporting application from distrobox", zap.String("application", appName))
 	// Check if the application is already exported
 	exported, err := IsDistroboxApplicationExported(appName)
 	if err != nil {
+		zap.L().Error("Error checking if application is exported", zap.String("application", appName), zap.Error(err))
 		return fmt.Errorf("failed to check if application is exported: %w", err)
 	} else if exported {
 		return nil // Application is already exported, no need to export again
@@ -137,7 +140,8 @@ func ExportDistroboxApplication(appName string) error {
 	cmd.Stderr = nil // Redirect error to nil
 	zap.L().Debug("Running command", zap.String("command", cmd.String()))
 	if err := cmd.Run(); err != nil {
-		return errors.New("failed to export application: " + err.Error())
+		zap.L().Error("Error exporting application", zap.String("application", appName), zap.Error(err))
+		return fmt.Errorf("failed to export application %s: %w", appName, err)
 	}
 	return nil
 }
