@@ -3,26 +3,50 @@ package install
 import "devbox/internal/commands"
 
 var (
-	// C_BINARIES contains the binaries to be exported for C
-	C_BINARIES = []string{
-		"gcc",
-		"g++",
-		"clang",
-		"make",
-		"cmake",
-		"clang-tidy",
-		"cppcheck",
-		"clang-format",
-		"valgrind",
-		"lcov",
-		"gcovr",
-		"gdb",
+	// C_INSTALLABLE_TOOLCHAIN is the installable toolchain for C
+	C_INSTALLABLE_TOOLCHAIN = &commands.InstallableToolchain{
+		Name:        "c",
+		Description: "C toolchain including gcc, clang, make, cmake, gdb, and more.",
+		InstalledPackages: []string{
+			"gcc",
+			"clang",
+			"make",
+			"cmake",
+			"clang-tidy",
+			"cppcheck",
+			"clang-format",
+			"valgrind",
+			"lcov",
+			"gcovr",
+			"gdb",
+			"cmake-gui",
+		},
+		ExportedBinaries: []string{
+			"gcc",
+			"clang",
+			"make",
+			"cmake",
+			"clang-tidy",
+			"cppcheck",
+			"clang-format",
+			"valgrind",
+			"lcov",
+			"gcovr",
+			"gdb",
+			"ctest",
+			"cpack",
+			"cmake-gui",
+		},
+		VSCodeExtensions: []string{
+			"ms-vscode.makefile-tools",
+			"ms-vscode.cpptools",
+			"ms-vscode.cpptools-extension-pack",
+			"ms-vscode.cmake-tools",
+			"ms-vscode.cpptools-themes",
+		},
+		VSCodeSettings: map[string]any{
+			"makefile.configureOnOpen":             true,
+			"cmake.deleteBuildDirOnCleanConfigure": true,
+		},
 	}
 )
-
-// installC installs the entire C development toolchain and environment.
-// It installs the C binaries and packages, ensuring they are available in the user's PATH.
-// It also sets up the necessary environment variables for C development.
-func installC(args *commands.SharedCmdArgs) []error {
-	return nil
-}

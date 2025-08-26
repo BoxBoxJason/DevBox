@@ -7,6 +7,13 @@ var (
 	BASH_INSTALLABLE_TOOLCHAIN = &commands.InstallableToolchain{
 		Name:        "bash",
 		Description: "Bash development environment",
+		InstalledPackages: []string{
+			"bash",
+			"shfmt",
+			"shellcheck",
+			"zsh",
+			"fish",
+		},
 		ExportedBinaries: []string{
 			"bash",
 			"shfmt",

@@ -2,7 +2,6 @@ package install
 
 import (
 	"devbox/internal/commands"
-	"devbox/internal/commands/setup"
 	"devbox/pkg/utils"
 	"fmt"
 
@@ -11,22 +10,17 @@ import (
 
 func InstallToolchains(args *commands.SharedCmdArgs, toolchains ...string) []error {
 	zap.L().Debug("Installing toolchains", zap.Strings("toolchains", toolchains))
-	errorsChannel := make(chan []error, len(toolchains)+1)
-	err := utils.LoadEnv(setup.DEFAULT_ENVIRONMENT)
-	if err != nil {
-		zap.L().Warn("Failed to load default environment variables", zap.Errors("errors", err))
-		errorsChannel <- err
-	}
+	errorsChannel := make(chan []error, len(toolchains))
 	for _, toolchain := range toolchains {
 		switch toolchain {
 		case "bash":
 			errorsChannel <- BASH_INSTALLABLE_TOOLCHAIN.Install(args)
 		case "c":
-			errorsChannel <- installC(args)
+			errorsChannel <- C_INSTALLABLE_TOOLCHAIN.Install(args)
 		case "container":
 			errorsChannel <- CONTAINER_INSTALLABLE_TOOLCHAIN.Install(args)
 		case "cpp":
-			errorsChannel <- installCpp(args)
+			errorsChannel <- CPP_INSTALLABLE_TOOLCHAIN.Install(args)
 		case "github":
 			errorsChannel <- GITHUB_INSTALLABLE_TOOLCHAIN.Install(args)
 		case "gitlab":
@@ -34,9 +28,9 @@ func InstallToolchains(args *commands.SharedCmdArgs, toolchains ...string) []err
 		case "golang":
 			errorsChannel <- GOLANG_INSTALLABLE_TOOLCHAIN.Install(args)
 		case "java":
-			errorsChannel <- installJava(args)
+			errorsChannel <- JAVA_INSTALLABLE_TOOLCHAIN.Install(args)
 		case "kubernetes":
-			errorsChannel <- installKubernetes(args)
+			errorsChannel <- KUBERNETES_INSTALLABLE_TOOLCHAIN.Install(args)
 		case "node":
 			errorsChannel <- NODE_INSTALLABLE_TOOLCHAIN.Install(args)
 		case "python":

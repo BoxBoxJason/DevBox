@@ -9,6 +9,12 @@ var (
 	NODE_INSTALLABLE_TOOLCHAIN = &commands.InstallableToolchain{
 		Name:        "node",
 		Description: "Node.js development environment",
+		InstalledPackages: []string{
+			"npm",
+			"npx",
+			"node",
+			"yarn",
+		},
 		ExportedBinaries: []string{
 			"npm",
 			"npx",

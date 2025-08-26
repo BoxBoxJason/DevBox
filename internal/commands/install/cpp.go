@@ -2,13 +2,18 @@ package install
 
 import "devbox/internal/commands"
 
-var (
-	// CPP_BINARIES contains the binaries to be exported for C++
-	CPP_BINARIES = []string{
+var CPP_INSTALLABLE_TOOLCHAIN = &commands.InstallableToolchain{
+	// C++ toolchain
+	Name:        "cpp",
+	Description: "C++ toolchain including gcc, clang, make, cmake, gdb, and common linters/formatters.",
+	InstalledPackages: []string{
+		"gcc",
 		"g++",
+		"clang",
 		"clang++",
 		"make",
 		"cmake",
+		"ninja",
 		"clang-tidy",
 		"cppcheck",
 		"clang-format",
@@ -16,12 +21,38 @@ var (
 		"lcov",
 		"gcovr",
 		"gdb",
-	}
-)
-
-// installCpp installs the entire Cpp development toolchain and environment.
-// It installs the Cpp binaries and packages, ensuring they are available in the user's PATH.
-// It also sets up the necessary environment variables for Cpp development.
-func installCpp(args *commands.SharedCmdArgs) []error {
-	return nil
+	},
+	ExportedBinaries: []string{
+		"gcc",
+		"g++",
+		"clang",
+		"clang++",
+		"make",
+		"cmake",
+		"ninja",
+		"clang-tidy",
+		"cppcheck",
+		"clang-format",
+		"valgrind",
+		"lcov",
+		"gcovr",
+		"gdb",
+	},
+	VSCodeExtensions: []string{
+		"ms-vscode.cpptools",
+		"ms-vscode.cpptools-extension-pack",
+		"ms-vscode.cmake-tools",
+		"ms-vscode.cpptools-themes",
+		"ms-vscode.makefile-tools",
+	},
+	VSCodeSettings: map[string]any{
+		"makefile.configureOnOpen":             true,
+		"cmake.deleteBuildDirOnCleanConfigure": true,
+		"cmake.generator":                      "Ninja",
+	},
+	EnvironmentVariables: map[string]string{
+		"CC":        "$(which gcc)",
+		"CXX":       "$(which g++)",
+		"MAKEFLAGS": "-j$(nproc)",
+	},
 }

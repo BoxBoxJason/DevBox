@@ -9,6 +9,11 @@ var (
 	GOLANG_INSTALLABLE_TOOLCHAIN = &commands.InstallableToolchain{
 		Name:        "golang",
 		Description: "Golang development environment",
+		InstalledPackages: []string{
+			"go",
+			"make",
+			"gofmt",
+		},
 		ExportedBinaries: []string{
 			"go",
 			"make",

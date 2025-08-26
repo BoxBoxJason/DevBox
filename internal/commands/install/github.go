@@ -7,6 +7,11 @@ var (
 	GITHUB_INSTALLABLE_TOOLCHAIN = &commands.InstallableToolchain{
 		Name:        "github",
 		Description: "GitHub development environment",
+		InstalledPackages: []string{
+			"gh",
+			"hub",
+			"git-lfs",
+		},
 		ExportedBinaries: []string{
 			"gh",
 			"hub",

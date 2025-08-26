@@ -10,6 +10,11 @@ var (
 	RUST_INSTALLABLE_TOOLCHAIN = &commands.InstallableToolchain{
 		Name:        "rust",
 		Description: "Rust development environment",
+		InstalledPackages: []string{
+			"cargo",
+			"rustc",
+			"rustup",
+		},
 		ExportedBinaries: []string{
 			"cargo",
 			"rustc",

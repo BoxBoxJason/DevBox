@@ -9,6 +9,10 @@ var (
 	PYTHON_INSTALLABLE_TOOLCHAIN = &commands.InstallableToolchain{
 		Name:        "python",
 		Description: "Python development environment",
+		InstalledPackages: []string{
+			"python",
+			"pip",
+		},
 		ExportedBinaries: []string{
 			"python",
 			"pip",
