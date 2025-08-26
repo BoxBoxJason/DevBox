@@ -58,37 +58,30 @@ type EnvManager struct {
 	variables map[string]string
 }
 
-func (em *EnvManager) Set(variables map[string]string) []error {
-	unsetVariables := make(map[string]string, len(variables))
-	for key, value := range variables {
-		variableValue, exists := em.variables[key]
-		if !exists || variableValue != value {
-			unsetVariables[key] = value
-		}
+func (em *EnvManager) Set(envVariablesMaps ...map[string]string) []error {
+	// Ensure in-memory map exists
+	if em.variables == nil {
+		em.variables = make(map[string]string)
 	}
-	if len(unsetVariables) > 0 {
-		// Append to file
-		if errs := em.AppendToEnvFile(unsetVariables); len(errs) > 0 {
-			return errs
-		}
 
-		// Ensure in-memory map exists
-		if em.variables == nil {
-			em.variables = make(map[string]string)
-		}
+	for _, variables := range envVariablesMaps {
+		unsetVariables := make(map[string]string)
 
-		// Update the in-memory map with the new variables
-		maps.Copy(em.variables, unsetVariables)
-
-		// Also set them in the process environment
-		var setErrs []error
-		for k, v := range unsetVariables {
-			if err := os.Setenv(k, os.ExpandEnv(v)); err != nil {
-				setErrs = append(setErrs, fmt.Errorf("failed to set env %s: %w", k, err))
+		for key, value := range variables {
+			variableValue, exists := em.variables[key]
+			if !exists || variableValue != value {
+				unsetVariables[key] = value
 			}
 		}
-		if len(setErrs) > 0 {
-			return setErrs
+
+		if len(unsetVariables) > 0 {
+			// Append to file
+			if errs := em.AppendToEnvFile(unsetVariables); len(errs) > 0 {
+				return errs
+			}
+
+			// Update the in-memory map with the new variables
+			maps.Copy(em.variables, unsetVariables)
 		}
 	}
 	return nil
