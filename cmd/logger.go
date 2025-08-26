@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -15,8 +16,16 @@ import (
 func SetupZapLogger(verbose bool, filename string) {
 	// Set up the logger configuration
 	config := zap.NewDevelopmentConfig()
-	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+
+	// Custom time encoder to include only date, time (hour, minute, second, millisecond)
+	config.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05(000)")
+
 	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+
+	// Disable automatic caller/file:line and stacktraces
+	config.DisableCaller = true
+	config.DisableStacktrace = true
+
 	if verbose {
 		config.Level.SetLevel(zapcore.DebugLevel)
 	} else {
@@ -25,9 +34,9 @@ func SetupZapLogger(verbose bool, filename string) {
 
 	// If a filename is specified, update the output path.
 	if filename != "" {
-		err := os.MkdirAll(filepath.Dir(filename), 0700)
-		if err != nil {
-			zap.L().Fatal("Failed to create log directory: " + err.Error())
+		if err := os.MkdirAll(filepath.Dir(filename), 0700); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to create log directory: %v\n", err)
+			os.Exit(1)
 		}
 		config.OutputPaths = []string{filename, "stderr"}
 	}
@@ -35,7 +44,8 @@ func SetupZapLogger(verbose bool, filename string) {
 	// Create the logger
 	logger, err := config.Build()
 	if err != nil {
-		zap.L().Fatal("Failed to create logger: " + err.Error())
+		fmt.Fprintf(os.Stderr, "Failed to create logger: %v\n", err)
+		os.Exit(1)
 	}
 
 	// Set the global logger
