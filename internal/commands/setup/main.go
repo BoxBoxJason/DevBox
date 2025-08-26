@@ -2,6 +2,7 @@ package setup
 
 import (
 	"devbox/internal/commands"
+	"devbox/internal/commands/install"
 	"devbox/internal/envmanager"
 	"devbox/pkg/utils"
 	"devbox/pkg/vscode"
@@ -96,14 +97,30 @@ var (
 		"LANG":            "${LANG:-en_US.UTF-8}",
 		"CLICOLOR":        "${CLICOLOR:-1}",
 		"EDITOR":          "${EDITOR:-vim}",
-		"ARCHFLAGS":       "-arch $(uname -m)",
+		"OS":              "$(uname | tr '[:upper:]' '[:lower:]')",
+		"ARCH":            "$(uname -m | sed -e 's/x86_64/amd64/' -e 's/(arm)(64)?.*/12/' -e 's/aarch64$/arm64/')",
+		"ARCHFLAGS":       "-arch ${ARCH}",
 		"PATH":            "${HOME}/.local/bin:${PATH}",
 	}
 )
 
 func SetupDevbox(args *commands.SharedCmdArgs) []error {
 	// Set the development environment variables
-	errs := envmanager.SystemEnvManager(envmanager.DEFAULT_SYS_ENV_FILE).Set(DEFAULT_ENVIRONMENT)
+	errs := envmanager.SystemEnvManager(envmanager.DEFAULT_SYS_ENV_FILE).Set(
+		DEFAULT_ENVIRONMENT,
+		install.BASH_INSTALLABLE_TOOLCHAIN.EnvironmentVariables,
+		install.C_INSTALLABLE_TOOLCHAIN.EnvironmentVariables,
+		install.CONTAINER_INSTALLABLE_TOOLCHAIN.EnvironmentVariables,
+		install.CPP_INSTALLABLE_TOOLCHAIN.EnvironmentVariables,
+		install.GITHUB_INSTALLABLE_TOOLCHAIN.EnvironmentVariables,
+		install.GITLAB_INSTALLABLE_TOOLCHAIN.EnvironmentVariables,
+		install.GOLANG_INSTALLABLE_TOOLCHAIN.EnvironmentVariables,
+		install.JAVA_INSTALLABLE_TOOLCHAIN.EnvironmentVariables,
+		install.KUBERNETES_INSTALLABLE_TOOLCHAIN.EnvironmentVariables,
+		install.NODE_INSTALLABLE_TOOLCHAIN.EnvironmentVariables,
+		install.PYTHON_INSTALLABLE_TOOLCHAIN.EnvironmentVariables,
+		install.RUST_INSTALLABLE_TOOLCHAIN.EnvironmentVariables,
+	)
 	if errs != nil {
 		return errs
 	}
