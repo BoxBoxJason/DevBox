@@ -44,7 +44,8 @@ func SystemEnvManager(envFile string) *EnvManager {
 		zap.L().Fatal("DEVBOX_ENV_FILE does not have the correct permissions, expected 0600", zap.String("file", envFile))
 	}
 	envManager = &EnvManager{
-		file: envFile,
+		file:          envFile,
+		pathVariables: make(map[string]struct{}),
 	}
 	if err := envManager.parseEnvFile(); err != nil {
 		zap.L().Fatal("Failed to parse env file", zap.String("file", envFile), zap.Error(err))
@@ -54,8 +55,9 @@ func SystemEnvManager(envFile string) *EnvManager {
 }
 
 type EnvManager struct {
-	file      string
-	variables map[string]string
+	file          string
+	variables     map[string]string
+	pathVariables map[string]struct{}
 }
 
 func (em *EnvManager) Set(envVariablesMaps ...map[string]string) []error {
@@ -68,6 +70,16 @@ func (em *EnvManager) Set(envVariablesMaps ...map[string]string) []error {
 		unsetVariables := make(map[string]string)
 
 		for key, value := range variables {
+			// if variable is PATH, check in all of the envVariablesMaps
+			if key == "PATH" {
+				if _, exists := em.pathVariables[value]; exists {
+					continue
+				} else {
+					unsetVariables[key] = value
+					em.pathVariables[value] = struct{}{}
+				}
+			}
+
 			variableValue, exists := em.variables[key]
 			if !exists || variableValue != value {
 				unsetVariables[key] = value
@@ -114,7 +126,11 @@ func (em *EnvManager) parseEnvFile() error {
 				key := utils.TrimSpacesAndQuotes(parts[0])
 				value := utils.TrimSpacesAndQuotes(parts[1])
 
-				vars[key] = value
+				if key == "PATH" {
+					em.pathVariables[value] = struct{}{}
+				} else {
+					vars[key] = value
+				}
 			}
 		}
 	}
