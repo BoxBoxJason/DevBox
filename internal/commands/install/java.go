@@ -4,7 +4,7 @@ import "devbox/internal/commands"
 
 var (
 	// JAVA_INSTALLABLE_TOOLCHAIN defines the Java toolchain with its packages, binaries, and settings.
-	JAVA_INSTALLABLE_TOOLCHAIN = &commands.InstallableToolchain{
+	JAVA_INSTALLABLE_TOOLCHAIN = &commands.Toolchain{
 		Name:        "java",
 		Description: "Java development environment",
 		InstalledPackages: []string{
@@ -26,12 +26,10 @@ var (
 			"jdb",
 			"jdeprscan",
 			"jdeps",
-			"jenv_prompt_info",
 			"jfr",
 			"jhsdb",
 			"jimage",
 			"jlink",
-			"jmad",
 			"jmod",
 			"jpackage",
 			"jps",

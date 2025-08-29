@@ -4,7 +4,7 @@ import "devbox/internal/commands"
 
 var (
 	// C_INSTALLABLE_TOOLCHAIN is the installable toolchain for C
-	C_INSTALLABLE_TOOLCHAIN = &commands.InstallableToolchain{
+	C_INSTALLABLE_TOOLCHAIN = &commands.Toolchain{
 		Name:        "c",
 		Description: "C toolchain including gcc, clang, make, cmake, gdb, and more.",
 		InstalledPackages: []string{

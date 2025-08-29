@@ -4,7 +4,7 @@ import "devbox/internal/commands"
 
 var (
 	// GITHUB_INSTALLABLE_TOOLCHAIN is the installable toolchain for GitHub
-	GITHUB_INSTALLABLE_TOOLCHAIN = &commands.InstallableToolchain{
+	GITHUB_INSTALLABLE_TOOLCHAIN = &commands.Toolchain{
 		Name:        "github",
 		Description: "GitHub development environment",
 		InstalledPackages: []string{
@@ -18,7 +18,6 @@ var (
 			"git-lfs",
 		},
 		ExportedApplications: []string{},
-		PackageManager:       nil,
 		VSCodeExtensions: []string{
 			"github.vscode-pull-request-github",
 			"github.copilot",

@@ -4,7 +4,7 @@ import "devbox/internal/commands"
 
 var (
 	// BASH_INSTALLABLE_TOOLCHAIN is the installable toolchain for Bash
-	BASH_INSTALLABLE_TOOLCHAIN = &commands.InstallableToolchain{
+	BASH_INSTALLABLE_TOOLCHAIN = &commands.Toolchain{
 		Name:        "bash",
 		Description: "Bash development environment",
 		InstalledPackages: []string{
@@ -21,7 +21,6 @@ var (
 			"zsh",
 			"fish",
 		},
-		PackageManager: nil,
 		VSCodeExtensions: []string{
 			"timonwong.shellcheck",
 			"foxundermoon.shell-format",

@@ -2,7 +2,7 @@ package install
 
 import "devbox/internal/commands"
 
-var CPP_INSTALLABLE_TOOLCHAIN = &commands.InstallableToolchain{
+var CPP_INSTALLABLE_TOOLCHAIN = &commands.Toolchain{
 	// C++ toolchain
 	Name:        "cpp",
 	Description: "C++ toolchain including gcc, clang, make, cmake, gdb, and common linters/formatters.",

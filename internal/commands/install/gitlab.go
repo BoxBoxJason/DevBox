@@ -3,7 +3,7 @@ package install
 import "devbox/internal/commands"
 
 var (
-	GITLAB_INSTALLABLE_TOOLCHAIN = &commands.InstallableToolchain{
+	GITLAB_INSTALLABLE_TOOLCHAIN = &commands.Toolchain{
 		Name:        "gitlab",
 		Description: "GitLab development environment",
 		InstalledPackages: []string{
@@ -17,7 +17,6 @@ var (
 			"git-lfs",
 		},
 		ExportedApplications: []string{},
-		PackageManager:       nil,
 		VSCodeExtensions: []string{
 			"gitlab.gitlab-workflow",
 			"redhat.vscode-yaml",

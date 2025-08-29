@@ -18,7 +18,7 @@ func SetupZapLogger(verbose bool, filename string) {
 	config := zap.NewDevelopmentConfig()
 
 	// Custom time encoder to include only date, time (hour, minute, second, millisecond)
-	config.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05(000)")
+	config.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05")
 
 	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 
