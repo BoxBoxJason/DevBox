@@ -2,11 +2,11 @@ package install
 
 import (
 	"devbox/internal/commands"
-	"devbox/pkg/utils"
+	"devbox/pkg/packagemanager"
 )
 
 var (
-	GOLANG_INSTALLABLE_TOOLCHAIN = &commands.InstallableToolchain{
+	GOLANG_INSTALLABLE_TOOLCHAIN = &commands.Toolchain{
 		Name:        "golang",
 		Description: "Golang development environment",
 		InstalledPackages: []string{
@@ -31,24 +31,20 @@ var (
 			"GOSUMDB":     "${GOSUMDB:-sum.golang.org}",
 			"PATH":        "${GOPATH}/bin:${PATH}",
 		},
-		PackageManager: &utils.PackageManager{
-			Name:         "go",
-			InstallCmd:   "install",
-			MultiInstall: false,
-			SudoRequired: false,
-		},
-		PackageManagerPackages: []string{
-			"github.com/securego/gosec/v2/cmd/gosec@latest",
-			"github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest",
-			"honnef.co/go/tools/cmd/staticcheck@latest",
-			"github.com/axw/gocov/gocov@latest",
-			"golang.org/x/tools/gopls@latest",
-			"golang.org/x/tools/cmd/godoc@latest",
-			"golang.org/x/tools/cmd/cover@latest",
-			"github.com/go-delve/delve/cmd/dlv@latest",
-			"github.com/cweill/gotests/gotests@latest",
-			"github.com/fatih/gomodifytags@latest",
-			"github.com/josharian/impl@latest",
+		PackageManagers: &map[*packagemanager.PackageManager][]string{
+			packagemanager.GOLANG_PACKAGE_MANAGER: {
+				"github.com/securego/gosec/v2/cmd/gosec@latest",
+				"github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest",
+				"honnef.co/go/tools/cmd/staticcheck@latest",
+				"github.com/axw/gocov/gocov@latest",
+				"golang.org/x/tools/gopls@latest",
+				"golang.org/x/tools/cmd/godoc@latest",
+				"golang.org/x/tools/cmd/cover@latest",
+				"github.com/go-delve/delve/cmd/dlv@latest",
+				"github.com/cweill/gotests/gotests@latest",
+				"github.com/fatih/gomodifytags@latest",
+				"github.com/josharian/impl@latest",
+			},
 		},
 		VSCodeExtensions: []string{
 			"golang.go",

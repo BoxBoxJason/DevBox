@@ -3,23 +3,18 @@ package install
 import "devbox/internal/commands"
 
 var (
-	CONTAINER_INSTALLABLE_TOOLCHAIN = &commands.InstallableToolchain{
+	CONTAINER_INSTALLABLE_TOOLCHAIN = &commands.Toolchain{
 		Name:        "container",
 		Description: "Container development environment",
 		InstalledPackages: []string{
-			"podman",
 			"hadolint",
 			"trivy",
-			"podman-compose",
 		},
 		ExportedBinaries: []string{
-			"podman",
 			"hadolint",
 			"trivy",
-			"podman-compose",
 		},
 		EnvironmentVariables: map[string]string{},
-		PackageManager:       nil,
 		VSCodeExtensions: []string{
 			"ms-azuretools.vscode-docker",
 			"docker.docker",

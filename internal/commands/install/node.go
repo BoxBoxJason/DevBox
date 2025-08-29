@@ -2,11 +2,11 @@ package install
 
 import (
 	"devbox/internal/commands"
-	"devbox/pkg/utils"
+	"devbox/pkg/packagemanager"
 )
 
 var (
-	NODE_INSTALLABLE_TOOLCHAIN = &commands.InstallableToolchain{
+	NODE_INSTALLABLE_TOOLCHAIN = &commands.Toolchain{
 		Name:        "node",
 		Description: "Node.js development environment",
 		InstalledPackages: []string{
@@ -32,18 +32,15 @@ var (
 			"YARN_CONFIG_FOLDER":  "${XDG_CONFIG_HOME}/yarn",
 			"YARN_REGISTRY":       "https://registry.yarnpkg.com",
 		},
-		PackageManager: &utils.PackageManager{
-			Name:             "npm",
-			InstallCmd:       "install",
-			NoInteractiveArg: utils.StrPtr("--user"),
-		},
-		PackageManagerPackages: []string{
-			"eslint",
-			"prettier",
-			"typescript",
-			"jest",
-			"ts-node",
-			"esbuild",
+		PackageManagers: &map[*packagemanager.PackageManager][]string{
+			packagemanager.NODE_PACKAGE_MANAGER: {
+				"eslint",
+				"prettier",
+				"typescript",
+				"jest",
+				"ts-node",
+				"esbuild",
+			},
 		},
 		VSCodeExtensions: []string{
 			"ms-vscode.vscode-typescript-next",

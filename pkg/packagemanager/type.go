@@ -1,22 +1,15 @@
-package utils
+package packagemanager
 
 import (
 	"bytes"
+	"devbox/pkg/utils"
 	"fmt"
 	"os/exec"
 
 	"go.uber.org/zap"
 )
 
-var (
-	VSCODE_PACKAGE_MANAGER = &PackageManager{
-		Name:             "code",
-		InstallCmd:       "--install-extension",
-		NoInteractiveArg: StrPtr("--force"),
-		MultiInstall:     false,
-		SudoRequired:     false,
-	}
-)
+var ()
 
 type PackageManager struct {
 	Name             string  `yaml:"name"`
@@ -88,5 +81,5 @@ func (pm *PackageManager) Install(packages []string) []error {
 	}
 
 	close(errorChan)
-	return MergeErrors(errorChan)
+	return utils.MergeErrors(errorChan)
 }

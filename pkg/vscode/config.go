@@ -1,6 +1,7 @@
 package vscode
 
 import (
+	"devbox/pkg/packagemanager"
 	"devbox/pkg/utils"
 	"encoding/json"
 	"fmt"
@@ -15,6 +16,13 @@ import (
 
 var (
 	SystemVSCode *VSCode = &VSCode{SettingsFile: nil}
+
+	VSCODE_PACKAGE_MANAGER = &packagemanager.PackageManager{
+		Name:         "code",
+		InstallCmd:   "--install-extension",
+		MultiInstall: false,
+		SudoRequired: false,
+	}
 )
 
 type VSCode struct {

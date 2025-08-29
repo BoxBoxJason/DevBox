@@ -4,6 +4,7 @@ import (
 	"devbox/internal/commands"
 	"devbox/internal/commands/install"
 	"devbox/internal/envmanager"
+	"devbox/pkg/packagemanager"
 	"devbox/pkg/utils"
 	"devbox/pkg/vscode"
 	"sync"
@@ -18,7 +19,6 @@ var (
 	// DEFAULT_DEV_BINARIES contains the default development binaries to be exported
 	DEFAULT_DEV_BINARIES = []string{
 		"git",
-		"podman",
 		"tree",
 		"curl",
 		"wget",
@@ -144,14 +144,14 @@ func SetupDevbox(args *commands.SharedCmdArgs) []error {
 	}
 
 	// Install generic utility software development / unix binaries
-	errChan <- utils.SystemPackageManager.Install(DEFAULT_DEV_BINARIES)
+	errChan <- packagemanager.SystemPackageManager.Install(DEFAULT_DEV_BINARIES)
 
 	// Install the VSCode extensions for Go development
 	if !args.SkipIde {
 		wg.Add(2)
 		go func() {
 			defer wg.Done()
-			errChan <- utils.VSCODE_PACKAGE_MANAGER.Install(DEFAULT_VSCODE_EXTENSIONS)
+			errChan <- vscode.VSCODE_PACKAGE_MANAGER.Install(DEFAULT_VSCODE_EXTENSIONS)
 		}()
 
 		go func() {

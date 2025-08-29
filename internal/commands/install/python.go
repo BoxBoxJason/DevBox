@@ -2,11 +2,11 @@ package install
 
 import (
 	"devbox/internal/commands"
-	"devbox/pkg/utils"
+	"devbox/pkg/packagemanager"
 )
 
 var (
-	PYTHON_INSTALLABLE_TOOLCHAIN = &commands.InstallableToolchain{
+	PYTHON_INSTALLABLE_TOOLCHAIN = &commands.Toolchain{
 		Name:        "python",
 		Description: "Python development environment",
 		InstalledPackages: []string{
@@ -25,20 +25,16 @@ var (
 			"PYTHONUSERBASE":            "${PYTHONUSERBASE:-${XDG_DATA_HOME}/python}",
 			"PATH":                      "${PYTHONUSERBASE}/bin:${PATH}",
 		},
-		PackageManager: &utils.PackageManager{
-			Name:         "pip",
-			InstallCmd:   "install",
-			MultiInstall: true,
-			SudoRequired: false,
-		},
-		PackageManagerPackages: []string{
-			"pylint",
-			"black",
-			"bandit",
-			"pytest",
-			"mypy",
-			"flake8",
-			"autopep8",
+		PackageManagers: &map[*packagemanager.PackageManager][]string{
+			packagemanager.PYTHON_PACKAGE_MANAGER: {
+				"pylint",
+				"black",
+				"bandit",
+				"pytest",
+				"mypy",
+				"flake8",
+				"autopep8",
+			},
 		},
 		VSCodeExtensions: []string{
 			"ms-python.python",
