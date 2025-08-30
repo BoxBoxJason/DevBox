@@ -10,10 +10,6 @@ import (
 	"go.uber.org/zap"
 )
 
-/* This file is part of the devbox go project
- * It defines the CLI commands for the devbox
- */
-
 var (
 	version = "dev"
 
