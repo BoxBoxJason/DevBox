@@ -18,7 +18,8 @@ var (
 			"k9s",
 		},
 		EnvironmentVariables: map[string]string{
-			"KREW_ROOT":                  "${KREW_ROOT:-{XDG_DATA_HOME}/krew}",
+			"KREW_ROOT":                  "${KREW_ROOT:-${XDG_DATA_HOME}/krew}",
+			"PATH":                       "${KREW_ROOT}/bin:${PATH}",
 			"KIND_EXPERIMENTAL_PROVIDER": "podman",
 		},
 		ExportedBinaries: []string{

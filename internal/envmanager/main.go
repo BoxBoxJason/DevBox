@@ -40,7 +40,7 @@ func SystemEnvManager(envFile string) *EnvManager {
 		zap.L().Fatal("DEVBOX_ENV_FILE points to a directory, expected a file", zap.String("file", envFile))
 	} else if envFileInfo.Mode()&os.ModeType != 0 {
 		zap.L().Fatal("DEVBOX_ENV_FILE points to a special file, expected a regular file", zap.String("file", envFile))
-	} else if envFileInfo.Mode()&0600 == 0 {
+	} else if envFileInfo.Mode().Perm() != 0600 {
 		zap.L().Fatal("DEVBOX_ENV_FILE does not have the correct permissions, expected 0600", zap.String("file", envFile))
 	}
 	envManager = &EnvManager{
@@ -51,7 +51,13 @@ func SystemEnvManager(envFile string) *EnvManager {
 		zap.L().Fatal("Failed to parse env file", zap.String("file", envFile), zap.Error(err))
 	}
 
+	systemEnvManager = envManager
 	return envManager
+}
+
+// ResetSystemEnvManager resets the singleton for testing purposes
+func ResetSystemEnvManager() {
+	systemEnvManager = nil
 }
 
 type EnvManager struct {
@@ -68,16 +74,16 @@ func (em *EnvManager) Set(envVariablesMaps ...map[string]string) []error {
 
 	for _, variables := range envVariablesMaps {
 		unsetVariables := make(map[string]string)
+		unsetPathVariables := []string{}
 
 		for key, value := range variables {
 			// if variable is PATH, check in all of the envVariablesMaps
 			if key == "PATH" {
-				if _, exists := em.pathVariables[value]; exists {
-					continue
-				} else {
-					unsetVariables[key] = value
+				if _, exists := em.pathVariables[value]; !exists {
+					unsetPathVariables = append(unsetPathVariables, value)
 					em.pathVariables[value] = struct{}{}
 				}
+				continue
 			}
 
 			variableValue, exists := em.variables[key]
@@ -86,9 +92,9 @@ func (em *EnvManager) Set(envVariablesMaps ...map[string]string) []error {
 			}
 		}
 
-		if len(unsetVariables) > 0 {
+		if len(unsetVariables)+len(unsetPathVariables) > 0 {
 			// Append to file
-			if errs := em.AppendToEnvFile(unsetVariables); len(errs) > 0 {
+			if errs := em.AppendToEnvFile(unsetVariables, unsetPathVariables); len(errs) > 0 {
 				return errs
 			}
 
@@ -142,8 +148,16 @@ func (em *EnvManager) parseEnvFile() error {
 // AppendToEnvFile appends new environment variables to the specified file.
 // It checks if the file ends with a newline and adds one if it doesn't.
 // The variables are added in the format "export KEY=VALUE".
-func (em *EnvManager) AppendToEnvFile(envVars map[string]string) []error {
-	zap.L().Info("Appending environment variables to file", zap.String("file", em.file), zap.Any("variables", envVars))
+func (em *EnvManager) AppendToEnvFile(envVars map[string]string, pathVars []string) []error {
+	if len(envVars)+len(pathVars) == 0 {
+		return nil
+	}
+	if len(envVars) > 0 {
+		zap.L().Info("Appending environment variables to file", zap.String("file", em.file), zap.Any("variables", envVars))
+	}
+	if len(pathVars) > 0 {
+		zap.L().Info("Appending PATH variables to file", zap.String("file", em.file), zap.Any("variables", pathVars))
+	}
 
 	fileEndsWithNewline, err := utils.FileEndsWithNewline(em.file)
 	if err != nil {
@@ -171,6 +185,14 @@ func (em *EnvManager) AppendToEnvFile(envVars map[string]string) []error {
 			errorChan <- fmt.Errorf("failed to write new variable to env file: %w", err)
 		}
 	}
+
+	for _, value := range pathVars {
+		line := fmt.Sprintf("export PATH=\"%s\"\n", value)
+		if _, err := wf.WriteString(line); err != nil {
+			errorChan <- fmt.Errorf("failed to write new PATH variable to env file: %w", err)
+		}
+	}
+
 	close(errorChan)
 	return utils.MergeErrors(errorChan)
 }

@@ -27,6 +27,7 @@ var (
 	NODE_PACKAGE_MANAGER = &PackageManager{
 		Name:             "npm",
 		InstallCmd:       "install",
+		MultiInstall:     true,
 		NoInteractiveArg: utils.StrPtr("--user"),
 	}
 

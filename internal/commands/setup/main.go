@@ -100,7 +100,6 @@ var (
 		"OS":              "$(uname | tr '[:upper:]' '[:lower:]')",
 		"ARCH":            "$(uname -m | sed -e 's/x86_64/amd64/' -e 's/(arm)(64)?.*/12/' -e 's/aarch64$/arm64/')",
 		"ARCHFLAGS":       "-arch ${ARCH}",
-		"PATH":            "${HOME}/.local/bin:${PATH}",
 	}
 )
 
